@@ -26,7 +26,6 @@ interface class InterFaceControllableWidget {
 
   late ListenerRegisterHandler listenerRegister;
   late List<EventRegisterHandler> eventHandlerList;
-
 }
 
 typedef ListenerAction = NoteButtonAction;
@@ -50,7 +49,30 @@ class CustomPointerUpEvent extends PointerEvent {
   }
 
   @override
-  PointerEvent copyWith({int? viewId, Duration? timeStamp, int? pointer, PointerDeviceKind? kind, int? device, Offset? position, Offset? delta, int? buttons, bool? obscured, double? pressure, double? pressureMin, double? pressureMax, double? distance, double? distanceMax, double? size, double? radiusMajor, double? radiusMinor, double? radiusMin, double? radiusMax, double? orientation, double? tilt, bool? synthesized, int? embedderId}) {
+  PointerEvent copyWith(
+      {int? viewId,
+      Duration? timeStamp,
+      int? pointer,
+      PointerDeviceKind? kind,
+      int? device,
+      Offset? position,
+      Offset? delta,
+      int? buttons,
+      bool? obscured,
+      double? pressure,
+      double? pressureMin,
+      double? pressureMax,
+      double? distance,
+      double? distanceMax,
+      double? size,
+      double? radiusMajor,
+      double? radiusMinor,
+      double? radiusMin,
+      double? radiusMax,
+      double? orientation,
+      double? tilt,
+      bool? synthesized,
+      int? embedderId}) {
     // TODO: implement copyWith
     throw UnimplementedError();
   }
@@ -72,17 +94,15 @@ class EventRegisterHandler {
   bool isMetaPressed = false;
   bool isShiftPressed = false;
   void Function() _event = () {};
+  LogicalKeyboardKey? lastKey;
 
-  
-  
   EventRegisterHandler([LogicalKeyboardKey? key]) {
-    if (key!=null) {
+    if (key != null) {
       _keyBind = key;
       setOnlyKeyDownAlive();
     } else {
       _anyKeyCanTrigger = true;
     }
-
   }
 
   setHandler(void Function() handlerEvent) {
@@ -115,19 +135,19 @@ class EventRegisterHandler {
 
   run(RawKeyEvent event) {
     if (_anyKeyCanTrigger) {
+      lastKey = event.logicalKey;
       _event.call();
-    }
-    else if (event.logicalKey == _keyBind){
-      if ((event is RawKeyDownEvent) && _onKeyDown){
+    } else if (event.logicalKey == _keyBind) {
+      if ((event is RawKeyDownEvent) && _onKeyDown) {
+        lastKey = event.logicalKey;
         _event.call();
       }
-      if ((event is RawKeyUpEvent) && _onKeyUp){
+      if ((event is RawKeyUpEvent) && _onKeyUp) {
+        lastKey = event.logicalKey;
         _event.call();
       }
     }
-
   }
-
 }
 
 class ListenerRegisterHandler {
@@ -139,7 +159,7 @@ class ListenerRegisterHandler {
     customPointerUpEvent = CustomPointerUpEvent()..setLastButton(newBtn);
   }
 
-  void clean(){
+  void clean() {
     customPointerUpEvent = CustomPointerUpEvent();
   }
 
@@ -147,14 +167,14 @@ class ListenerRegisterHandler {
     void Function(PointerEvent event) innerListener = (event) {
       listener.call(customPointerUpEvent);
     };
-      addListener(ListenerType.onPointerUp, 0, innerListener);
+    addListener(ListenerType.onPointerUp, 0, innerListener);
   }
 
   void pointerScrollListener(void Function(PointerScrollEvent event) listener) {
     void Function(PointerEvent event) innerListener = (event) {
       listener.call(event as PointerScrollEvent);
     };
-      addListener(ListenerType.onPointerSignal, 0, innerListener);
+    addListener(ListenerType.onPointerSignal, 0, innerListener);
   }
 
   void addListener(ListenerType listenerType, int listenerAction,

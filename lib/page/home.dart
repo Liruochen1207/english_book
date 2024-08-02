@@ -11,8 +11,9 @@ import 'package:english_book/sql/client.dart';
 import 'package:english_book/sql/word.dart';
 
 import 'package:english_book/http/english_chinese.dart';
+import 'package:flutter/services.dart';
 
-List<String> words = [];
+List<List<dynamic>> words = [];
 
 class MyHomePage extends StatefulWidget {
   // This widget is the home page of your application. It is stateful, meaning
@@ -32,16 +33,27 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late AudioPlayer player = AudioPlayer();
+  var client = SqlClient();
 
   int _counter = 0;
   int _delta = 0;
   var _word = "";
   var _explain = "";
+  int _tableIndex = 2;
+
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
+  List<EventRegisterHandler> eventHandlerList = [];
+  FocusNode backgroundFocus = FocusNode();
 
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
   get screenHeight => screenSize.height;
+
+  void pageDown() {
+    if (_counter != 0) {
+      _counter -= 1;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +63,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+
+    FocusScope.of(context).requestFocus(backgroundFocus);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.amber,
@@ -58,9 +73,9 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Stack(
         children: [
           TemplateCard(
-            focusNode: FocusNode(),
+            focusNode: backgroundFocus,
             listenerRegister: registerHandler,
-            eventHandlerList: [],
+            eventHandlerList: eventHandlerList,
             color: Color.fromARGB(0, 215, 223, 180),
           ),
           Center(
@@ -138,7 +153,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> connectSQL() async {
     print("尝试连接");
-    var client = SqlClient();
     var connection = await client.connect();
     print(connection);
     words = await getWords(connection);
@@ -146,11 +160,17 @@ class _MyHomePageState extends State<MyHomePage> {
     refreshWord();
   }
 
+  Future<void> updateMean() async {
+    print("尝试注入单词 $_word");
+    var connection = await client.connect();
+    submitMeans(connection, _tableIndex, _word, _explain);
+  }
+
   @override
   void dispose() {
     // Release all sources and dispose the player.
     player.dispose();
-
+    backgroundFocus.dispose();
     super.dispose();
   }
 
@@ -172,6 +192,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Set the release mode to keep the source after playback has completed.
     player.setReleaseMode(ReleaseMode.stop);
+    eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.arrowLeft)
+      ..setOnlyKeyUpAlive()
+      ..setHandler(() {
+        print("LEFT");
+        pageDown();
+        refreshWord();
+      }));
+
+    eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.arrowRight)
+      ..setOnlyKeyUpAlive()
+      ..setHandler(() {
+        print("RIGHT");
+        _counter += 1;
+        refreshWord();
+      }));
+
+    eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.space)
+      ..setOnlyKeyUpAlive()
+      ..setHandler(() {
+        print("SPEECH");
+        speechWord(2);
+      }));
 
     registerHandler.addListener(
         ListenerType.onPointerMove, NoteButtonAction.leftButton, (event) {
@@ -194,12 +236,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     registerHandler.addListener(
         ListenerType.onPointerUp, NoteButtonAction.leftButton, (event) {
-      void pageDown() {
-        if (_counter != 0) {
-          _counter -= 1;
-        }
-      }
-
       if (_delta.abs() > 7) {
         if (_delta < 0) {
           print("page -");
@@ -225,18 +261,27 @@ class _MyHomePageState extends State<MyHomePage> {
   String pickWord(int index) {
     if (words.length == 0) {
       return "";
-    } else if (index > words.length) {
-      return words.last;
     } else {
-      return words[index];
+      var result = [];
+      if (index > words.length) {
+        result = words.last;
+      } else {
+        result = words[index];
+      }
+
+      _tableIndex = result[0];
+      return result[1];
     }
   }
 
   void refreshWord() {
+    print("获取时间 => ${DateTime.now()}");
     _word = pickWord(_counter);
+    // _word = "statistics";
     explainWord(_word).then((value) {
       _explain = value;
       setState(() {});
+      updateMean();
     });
   }
 

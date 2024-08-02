@@ -1,4 +1,7 @@
+import 'package:english_book/card/interface_controlableWidget.dart';
+import 'package:english_book/card/template_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class Exam extends StatefulWidget {
   late String word;
@@ -16,6 +19,10 @@ class _ExamState extends State<Exam> {
   int length = 0;
   double letterWidth = 10;
   List<Widget> letterList = [];
+
+  ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
+  List<EventRegisterHandler> eventHandlerList = [];
+  FocusNode backgroundFocus = FocusNode();
 
   Widget letterBuilder(String letter, double letterWidth) {
     return Padding(
@@ -35,12 +42,22 @@ class _ExamState extends State<Exam> {
   @override
   void initState() {
     super.initState();
+    var inputHandler = EventRegisterHandler()
+      ..setAnyKeyCanTrigger(true)
+      ..setOnlyKeyUpAlive();
+    inputHandler.setHandler(() {
+      print(inputHandler.lastKey);
+    });
+    eventHandlerList.add(inputHandler);
   }
 
   @override
   Widget build(BuildContext context) {
+    FocusScope.of(context).requestFocus(backgroundFocus);
     length = widget.word.length;
-    letterWidth = screenWidth / length / 1.2;
+    letterWidth = screenWidth / length;
+    letterWidth /= 1.4;
+    letterList = [];
     for (int i = 0; i < length; i++) {
       letterList.add(letterBuilder(widget.word[i], letterWidth));
     }
@@ -49,13 +66,18 @@ class _ExamState extends State<Exam> {
       appBar: AppBar(
         title: Text('背诵'),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            Row(
-              children: letterList,
-            )
-          ],
+      body: TemplateCard(
+        focusNode: backgroundFocus,
+        listenerRegister: registerHandler,
+        eventHandlerList: eventHandlerList,
+        child: Center(
+          child: Column(
+            children: [
+              Row(
+                children: letterList,
+              )
+            ],
+          ),
         ),
       ),
     );
