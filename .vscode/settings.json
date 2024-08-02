@@ -1,0 +1,47 @@
+{
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+    "workbench.editorAssociations": {
+        "*.7z": "default",
+        "*.exe": "default"
+    },
+    "python.autoComplete.extraPaths": [
+        "C:\\ProgramData\\aos\\miniconda3\\utility\\python"
+    ],
+    "python.analysis.extraPaths": [
+        "C:\\ProgramData\\aos\\miniconda3\\utility\\python"
+    ],
+    "haasStudio.usr.key": "usr089031",
+    "haasStudio.projectInfo": "",
+    "haasStudio.pyProjectPaths": [
+        "c:\\Users\\Dreamer\\workspace\\testhaas_demo",
+        "C:\\Users\\Dreamer\\workspace\\testhaas_demo"
+    ],
+    "security.workspace.trust.untrustedFiles": "open",
+    "haasStudio.cProjectPaths": [
+        "c:\\Users\\Dreamer\\workspace\\testhaas_demo2"
+    ],
+    "haasStudio.allProjectPaths": [
+        "c:\\Users\\Dreamer\\workspace\\testhaas_demo2\\solutions\\test_demo"
+    ],
+    "haasStudio.openBrowser": "false",
+    "cmake.configureOnOpen": true,
+    "workbench.iconTheme": "material-icon-theme",
+    "[dart]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.rulers": [
+            80
+        ],
+        "editor.selectionHighlight": false,
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.suggestSelection": "first",
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": false,
+        "editor.defaultFormatter": "Dart-Code.dart-code"
+    },
+    "dart.flutterCreateAndroidLanguage": "java",
+    "workbench.colorTheme": "Kimbie Dark",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
+}

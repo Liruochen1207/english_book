@@ -1,0 +1,259 @@
+import 'package:english_book/page/exam.dart';
+import 'package:flutter/material.dart';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:english_book/card/interface_controlableWidget.dart';
+import 'package:english_book/card/template_card.dart';
+import 'package:english_book/note_action.dart';
+import 'package:english_book/sql/client.dart';
+import 'package:english_book/sql/word.dart';
+
+import 'package:english_book/http/english_chinese.dart';
+
+List<String> words = [];
+
+class MyHomePage extends StatefulWidget {
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
+
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
+
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  late AudioPlayer player = AudioPlayer();
+
+  int _counter = 0;
+  int _delta = 0;
+  var _word = "";
+  var _explain = "";
+  ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
+
+  get screenSize => MediaQuery.of(context).size;
+  get screenWidth => screenSize.width;
+  get screenHeight => screenSize.height;
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.amber,
+      ),
+      body: Stack(
+        children: [
+          TemplateCard(
+            focusNode: FocusNode(),
+            listenerRegister: registerHandler,
+            eventHandlerList: [],
+            color: Color.fromARGB(0, 215, 223, 180),
+          ),
+          Center(
+            child: Column(
+              // Column is also a layout widget. It takes a list of children and
+              // arranges them vertically. By default, it sizes itself to fit its
+              // children horizontally, and tries to be as tall as its parent.
+              //
+              // Column has various properties to control how it sizes itself and
+              // how it positions its children. Here we use mainAxisAlignment to
+              // center the children vertically; the main axis here is the vertical
+              // axis because Columns are vertical (the cross axis would be
+              // horizontal).
+              //
+              // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+              // action in the IDE, or press "p" in the console), to see the
+              // wireframe for each widget.
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.all(30),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$_word',
+                        style: TextStyle(fontSize: 40),
+                      ),
+                      SizedBox(
+                        width: 1,
+                      ),
+                      // IconButton(onPressed: (){
+                      //   speechWord(1);
+                      // }, icon: Icon(Icons.volume_up, size: 20,)),
+                      IconButton(
+                          onPressed: () {
+                            speechWord(2);
+                          },
+                          icon: Icon(
+                            Icons.volume_up,
+                            size: 20,
+                          )),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(30),
+                  child: Text(
+                    '$_explain',
+                  ),
+                ),
+              ],
+            ),
+          ), // This trailing comma makes auto-formatting nicer for build methods.
+
+          Positioned(
+              bottom: 40,
+              right: 40,
+              child: FloatingActionButton(
+                child: Icon(Icons.library_books),
+                onPressed: () async {
+                  var value = await Navigator.push(context,
+                      MaterialPageRoute(builder: (context) {
+                    return Exam(word: _word);
+                  }));
+                  print("get value => $value");
+                },
+              )),
+        ],
+      ),
+    );
+  }
+
+  Future<void> connectSQL() async {
+    print("尝试连接");
+    var client = SqlClient();
+    var connection = await client.connect();
+    print(connection);
+    words = await getWords(connection);
+    print(words);
+    refreshWord();
+  }
+
+  @override
+  void dispose() {
+    // Release all sources and dispose the player.
+    player.dispose();
+
+    super.dispose();
+  }
+
+  Future<String> explainWord(String word) async {
+    var ready = "";
+    if (word != "") {
+      ready = await englishSearch(word);
+    }
+    return ready;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    connectSQL();
+    // refreshWord();
+    // Create the audio player.
+    player = AudioPlayer();
+
+    // Set the release mode to keep the source after playback has completed.
+    player.setReleaseMode(ReleaseMode.stop);
+
+    registerHandler.addListener(
+        ListenerType.onPointerMove, NoteButtonAction.leftButton, (event) {
+      if (event.delta.dx < 0) {
+        _delta += 1;
+      }
+      if (event.delta.dx > 0) {
+        _delta -= 1;
+      }
+    });
+
+    registerHandler.addListener(
+        ListenerType.onPointerMove, NoteButtonAction.leftButton, (event) {
+      if (event.delta.dx < 0) {
+        _delta += 1;
+      }
+      if (event.delta.dx > 0) {
+        _delta -= 1;
+      }
+    });
+    registerHandler.addListener(
+        ListenerType.onPointerUp, NoteButtonAction.leftButton, (event) {
+      void pageDown() {
+        if (_counter != 0) {
+          _counter -= 1;
+        }
+      }
+
+      if (_delta.abs() > 7) {
+        if (_delta < 0) {
+          print("page -");
+          pageDown();
+        } else {
+          print("page +");
+          _counter += 1;
+        }
+      } else {
+        if (event.position.dx > screenWidth / 2) {
+          _counter += 1;
+        } else {
+          pageDown();
+        }
+      }
+
+      _delta = 0;
+
+      refreshWord();
+    });
+  }
+
+  String pickWord(int index) {
+    if (words.length == 0) {
+      return "";
+    } else if (index > words.length) {
+      return words.last;
+    } else {
+      return words[index];
+    }
+  }
+
+  void refreshWord() {
+    _word = pickWord(_counter);
+    explainWord(_word).then((value) {
+      _explain = value;
+      setState(() {});
+    });
+  }
+
+  Future<void> speechWord(int type) async {
+    if (type < 1) {
+      type = 1;
+    }
+    if (type > 2) {
+      type = 2;
+    }
+    await player.setSource(
+        UrlSource("https://dict.youdao.com/dictvoice?audio=$_word&type=$type"));
+    await player.resume();
+  }
+
+  void _incrementCounter() {
+    _counter++;
+    refreshWord();
+  }
+}
