@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
@@ -95,6 +96,7 @@ class EventRegisterHandler {
   bool isShiftPressed = false;
   void Function() _event = () {};
   LogicalKeyboardKey? lastKey;
+  int lastEventHashcode = 0;
 
   EventRegisterHandler([LogicalKeyboardKey? key]) {
     if (key != null) {
@@ -134,17 +136,28 @@ class EventRegisterHandler {
   }
 
   run(RawKeyEvent event) {
-    if (_anyKeyCanTrigger) {
-      lastKey = event.logicalKey;
-      _event.call();
-    } else if (event.logicalKey == _keyBind) {
-      if ((event is RawKeyDownEvent) && _onKeyDown) {
+    print(event.hashCode);
+    if (event.hashCode != lastEventHashcode) {
+      lastEventHashcode = event.hashCode;
+      if (_anyKeyCanTrigger) {
         lastKey = event.logicalKey;
-        _event.call();
-      }
-      if ((event is RawKeyUpEvent) && _onKeyUp) {
-        lastKey = event.logicalKey;
-        _event.call();
+        if (_onKeyDown && event is RawKeyDownEvent) {
+          lastKey = event.logicalKey;
+          _event.call();
+        }
+        if (_onKeyUp && event is RawKeyUpEvent) {
+          lastKey = event.logicalKey;
+          _event.call();
+        }
+      } else if (event.logicalKey == _keyBind) {
+        if ((event is RawKeyDownEvent) && _onKeyDown) {
+          lastKey = event.logicalKey;
+          _event.call();
+        }
+        if ((event is RawKeyUpEvent) && _onKeyUp) {
+          lastKey = event.logicalKey;
+          _event.call();
+        }
       }
     }
   }

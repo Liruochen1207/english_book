@@ -9,23 +9,22 @@ import '../note_action.dart';
 
 class TemplateCard extends StatefulWidget
     implements InterFaceControllableWidget {
-  TemplateCard({
-    super.key,
-    required this.focusNode,
-    this.child,
-    this.color,
-    this.debug,
-    this.dragAble,
-    this.fatherWidget,
-    this.fontColor,
-    this.fontSize,
-    this.height,
-    this.name,
-    this.paint,
-    this.width,
-    required this.listenerRegister,
-    required this.eventHandlerList
-});
+  TemplateCard(
+      {super.key,
+      required this.focusNode,
+      this.child,
+      this.color,
+      this.debug,
+      this.dragAble,
+      this.fatherWidget,
+      this.fontColor,
+      this.fontSize,
+      this.height,
+      this.name,
+      this.paint,
+      this.width,
+      required this.listenerRegister,
+      required this.eventHandlerList});
 
   @override
   State<TemplateCard> createState() => _TemplateCardState();
@@ -96,7 +95,6 @@ class _TemplateCardState extends State<TemplateCard> {
   @override
   void initState() {
     super.initState();
-
   }
 
   @override
@@ -106,6 +104,7 @@ class _TemplateCardState extends State<TemplateCard> {
     return RawKeyboardListener(
         focusNode: widget.focusNode,
         onKey: (RawKeyEvent event) {
+          // print(event);
           setState(() {
             for (EventRegisterHandler element in widget.eventHandlerList) {
               element.isAltPressed = event.isAltPressed;

@@ -40,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var _word = "";
   var _explain = "";
   int _tableIndex = 2;
+  bool portalOpened = false;
 
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
@@ -55,6 +56,28 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<void> gatePortal() async {
+    if (!portalOpened) {
+      portalOpened = true;
+      backgroundFocus.unfocus();
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return Exam(word: _word);
+      })).then((value) {
+        print("VALUE => ${value.runtimeType}");
+        if (value.runtimeType.toString() == "_Map<String, String>") {
+          switch (value['result']) {
+            case 'exam':
+              print("SPEECH");
+              speechWord(2);
+              break;
+          }
+        }
+
+        portalOpened = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -63,8 +86,6 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-
-    FocusScope.of(context).requestFocus(backgroundFocus);
 
     return Scaffold(
       appBar: AppBar(
@@ -138,12 +159,8 @@ class _MyHomePageState extends State<MyHomePage> {
               right: 40,
               child: FloatingActionButton(
                 child: Icon(Icons.library_books),
-                onPressed: () async {
-                  var value = await Navigator.push(context,
-                      MaterialPageRoute(builder: (context) {
-                    return Exam(word: _word);
-                  }));
-                  print("get value => $value");
+                onPressed: () {
+                  gatePortal();
                 },
               )),
         ],
@@ -170,6 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     // Release all sources and dispose the player.
     player.dispose();
+    backgroundFocus.unfocus();
     backgroundFocus.dispose();
     super.dispose();
   }
@@ -215,8 +233,16 @@ class _MyHomePageState extends State<MyHomePage> {
         speechWord(2);
       }));
 
+    eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.enter)
+      ..setOnlyKeyUpAlive()
+      ..setHandler(() {
+        print("EXAM");
+        gatePortal();
+      }));
+
     registerHandler.addListener(
         ListenerType.onPointerMove, NoteButtonAction.leftButton, (event) {
+      print("DRAGING => ${event.delta}");
       if (event.delta.dx < 0) {
         _delta += 1;
       }
@@ -245,9 +271,9 @@ class _MyHomePageState extends State<MyHomePage> {
           _counter += 1;
         }
       } else {
-        if (event.position.dx > screenWidth / 2) {
+        if (event.position.dx > (screenWidth - (screenWidth / 3))) {
           _counter += 1;
-        } else {
+        } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
         }
       }
@@ -277,7 +303,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void refreshWord() {
     print("获取时间 => ${DateTime.now()}");
     _word = pickWord(_counter);
-    // _word = "statistics";
+    // _word = "curve";
     explainWord(_word).then((value) {
       _explain = value;
       setState(() {});
