@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import 'package:html/dom.dart';
@@ -65,7 +68,15 @@ Future<List<String>> englishSearch(String word) async {
   return ready; // 打印存储的字符串
 }
 
+Future<Uint8List> getSpeechBytes(String word) async {
+  final dio = Dio();
+  final response = await dio.get("https://dict.youdao.com/dictvoice/",
+      options: Options(responseType: ResponseType.bytes),
+      queryParameters: {"audio": word, "type": 2});
+  print(response.data.runtimeType);
+  return response.data;
+}
+
 Future<void> main() async {
-  var word = await englishSearch("search");
-  print(word);
+  var word = await getSpeechBytes('hello');
 }

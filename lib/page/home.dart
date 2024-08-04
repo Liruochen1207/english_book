@@ -1,4 +1,5 @@
 import 'package:english_book/page/exam.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:typed_data';
@@ -12,6 +13,7 @@ import 'package:english_book/sql/word.dart';
 
 import 'package:english_book/http/english_chinese.dart';
 import 'package:flutter/services.dart';
+import 'package:mysql_client/mysql_client.dart';
 
 List<List<dynamic>> words = [];
 
@@ -41,8 +43,10 @@ class _MyHomePageState extends State<MyHomePage> {
   var _word = "";
   var _explain = "";
   var _other = "";
+  Uint8List? _voice;
   int _tableIndex = 2;
   bool portalOpened = false;
+  MySQLConnection? connection;
 
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
@@ -63,7 +67,10 @@ class _MyHomePageState extends State<MyHomePage> {
       portalOpened = true;
       backgroundFocus.unfocus();
       Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return Exam(word: _word);
+        return Exam(
+          word: _word,
+          voice: _voice,
+        );
       })).then((value) {
         print("VALUE => ${value.runtimeType}");
         if (value.runtimeType.toString() == "_Map<String, String>") {
@@ -182,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> connectSQL() async {
     print("尝试连接");
-    var connection = await client.connect();
+    connection = await client.connect();
     print(connection);
     words = await getWords(connection);
     print(words);
@@ -191,9 +198,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> updateData() async {
     print("尝试注入单词 $_word");
-    var connection = await client.connect();
     submitMeans(connection, _tableIndex, _word, _explain);
     submitOthers(connection, _tableIndex, _word, _other);
+    submitVoice(connection, _tableIndex, _word, _voice);
   }
 
   @override
@@ -283,17 +290,19 @@ class _MyHomePageState extends State<MyHomePage> {
           print("page +");
           _counter += 1;
         }
+
+        refreshWord();
       } else {
         if (event.position.dx > (screenWidth - (screenWidth / 3))) {
           _counter += 1;
+          refreshWord();
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
+          refreshWord();
         }
       }
 
       _delta = 0;
-
-      refreshWord();
     });
   }
 
@@ -318,9 +327,35 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void voiceManage({required bool doPlaying}) {
+    getSQLVoice(connection, _tableIndex, _word).then((voice) {
+      print(voice);
+      if (voice == null) {
+        print("需要从互联网补充音频");
+        getSpeechBytes(_word).then((onValue) {
+          _voice = onValue;
+          submitVoice(connection, _tableIndex, _word, onValue);
+          if (doPlaying) {
+            player.setSource(BytesSource(onValue));
+            player.resume();
+          }
+        });
+      } else {
+        print("需要从数据库读取音频");
+        _voice = voice;
+        if (doPlaying) {
+          player.setSource(BytesSource(voice));
+          player.resume();
+        }
+      }
+    });
+  }
+
   void refreshWord() {
-    print("获取时间 => ${DateTime.now()}");
+    print("需要刷新当前单词的时间 => ${DateTime.now()}");
     _word = pickWord(_counter);
+    voiceManage(doPlaying: false);
+
     // _word = "curve";
     if (_explain == '' || _other == '') {
       print("需要搜索");
@@ -349,9 +384,11 @@ class _MyHomePageState extends State<MyHomePage> {
     if (type > 2) {
       type = 2;
     }
-    await player.setSource(
-        UrlSource("https://dict.youdao.com/dictvoice?audio=$_word&type=$type"));
-    await player.resume();
+    voiceManage(doPlaying: true);
+
+    // await player.setSource(
+    //     UrlSource("https://dict.youdao.com/dictvoice?audio=$_word&type=$type"));
+    // await player.resume();
   }
 
   void _incrementCounter() {

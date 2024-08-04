@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:english_book/card/interface_controlableWidget.dart';
 import 'package:english_book/card/template_card.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +53,8 @@ class _LetterCardState extends State<LetterCard> {
 
 class Exam extends StatefulWidget {
   late String word;
-  Exam({super.key, required this.word});
+  late Uint8List? voice;
+  Exam({super.key, required this.word, required this.voice});
 
   @override
   _ExamState createState() => _ExamState();
@@ -72,6 +74,7 @@ class _ExamState extends State<Exam> {
 
   DateTime lastInputTime = DateTime.now();
 
+  late AudioPlayer player = AudioPlayer();
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
   FocusNode backgroundFocus = FocusNode();
@@ -113,7 +116,8 @@ class _ExamState extends State<Exam> {
   @override
   void initState() {
     super.initState();
-
+    // player = AudioPlayer();
+    player.setReleaseMode(ReleaseMode.stop);
     var inputHandler = EventRegisterHandler();
     inputHandler.setOnlyKeyDownAlive();
     inputHandler.setHandler(() {
@@ -186,6 +190,14 @@ class _ExamState extends State<Exam> {
     });
   }
 
+  void doPlaying() {
+    var voice = widget.voice;
+    if (voice != null && voice.isNotEmpty) {
+      player.setSource(BytesSource(voice));
+      player.resume();
+    }
+  }
+
   void cleanUp() {
     for (int i = 0; i < length; i++) {
       (letterList[i] as LetterCard).change('');
@@ -201,6 +213,7 @@ class _ExamState extends State<Exam> {
   }
 
   void doWrong() {
+    doPlaying();
     for (int i = 0; i < length; i++) {
       (letterList[i] as LetterCard).change('✗');
       listPointer = 0;
@@ -227,6 +240,7 @@ class _ExamState extends State<Exam> {
   @override
   void dispose() {
     // TODO: implement dispose
+    player.dispose();
     SystemChannels.textInput.invokeListMethod('TextInput.hide');
     listPointer = 0;
     letterList = [];
@@ -248,6 +262,7 @@ class _ExamState extends State<Exam> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const SizedBox(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: letterList,
@@ -265,6 +280,11 @@ class _ExamState extends State<Exam> {
                         confirm();
                       },
                       child: Text('提交')),
+                  cupertino.CupertinoButton(
+                      onPressed: () {
+                        doPlaying();
+                      },
+                      child: Text('发音')),
                   IconButton(
                       onPressed: () {
                         if (listPointer - 1 >= 0) {
