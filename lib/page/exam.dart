@@ -193,6 +193,8 @@ class _ExamState extends State<Exam> {
   void doPlaying() {
     var voice = widget.voice;
     if (voice != null && voice.isNotEmpty) {
+      player = AudioPlayer();
+      player.setReleaseMode(ReleaseMode.stop);
       player.setSource(BytesSource(voice));
       player.resume();
     }

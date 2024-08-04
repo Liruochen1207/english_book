@@ -336,6 +336,8 @@ class _MyHomePageState extends State<MyHomePage> {
           _voice = onValue;
           submitVoice(connection, _tableIndex, _word, onValue);
           if (doPlaying) {
+            player = AudioPlayer();
+            player.setReleaseMode(ReleaseMode.stop);
             player.setSource(BytesSource(onValue));
             player.resume();
           }
@@ -344,6 +346,8 @@ class _MyHomePageState extends State<MyHomePage> {
         print("需要从数据库读取音频");
         _voice = voice;
         if (doPlaying) {
+          player = AudioPlayer();
+          player.setReleaseMode(ReleaseMode.stop);
           player.setSource(BytesSource(voice));
           player.resume();
         }
