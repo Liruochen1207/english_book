@@ -16,13 +16,28 @@ Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
   }
 }
 
+Future<void> submitOthers(MySQLConnection? connection, int tableIndex,
+    String word, String other) async {
+  if (other != "") {
+    print("准备 => $other");
+    if (connection != null) {
+      var result = await connection.execute(
+          "UPDATE word_table0$tableIndex SET other='$other' WHERE word='$word'");
+      print("注入结果：");
+      for (final row in result.rows) {
+        print(row.colAt(0));
+      }
+    }
+  }
+}
+
 Future<List<List<dynamic>>> getWords(MySQLConnection? connection) async {
   List<List<dynamic>> readyReturns = [];
   if (connection != null) {
     var tableIndex = 2;
     while (tableIndex <= 6) {
-      var result =
-          await connection.execute("SELECT word FROM word_table0$tableIndex");
+      var result = await connection
+          .execute("SELECT word, mean, other FROM word_table0$tableIndex");
       // print query result
       for (final row in result.rows) {
         // print(row.colAt(0));
@@ -31,8 +46,8 @@ Future<List<List<dynamic>>> getWords(MySQLConnection? connection) async {
         readyReturns.add([
           tableIndex,
           row.assoc()['word']!,
-          row.assoc()['mean']!,
-          row.assoc()['other']!
+          row.assoc()['mean'],
+          row.assoc()['other'],
         ]);
       }
       tableIndex += 1;

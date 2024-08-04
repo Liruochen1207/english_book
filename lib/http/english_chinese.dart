@@ -37,8 +37,9 @@ Future<String> translateLanguage(String sentence) async {
   return ready;
 }
 
-Future<String> englishSearch(String word) async {
-  var ready = "";
+Future<List<String>> englishSearch(String word) async {
+  List<String> ready = [];
+
   final dio = Dio();
   final response = await dio
       .get('https://fanyi.baidu.com/sug', queryParameters: {"kw": word});
@@ -50,14 +51,17 @@ Future<String> englishSearch(String word) async {
   print(data['data'].runtimeType);
   try {
     if (data is Map && (data['data'] as List<dynamic>).isNotEmpty) {
-      Map m = (data['data'] as List<dynamic>).first;
-      // ready += "${m['k']}\n";
-      ready += "${m['v']}\n";
+      for (var i = 0; i < (data['data'] as List<dynamic>).length; i++) {
+        var cache = "";
+        Map m = (data['data'] as List<dynamic>)[i];
+        cache += "${m['k']} - ";
+        cache += "${m['v']}\n";
+        ready.add(cache);
+      }
     }
   } catch (TypeError) {
-    return "";
+    return [];
   }
-
   return ready; // 打印存储的字符串
 }
 

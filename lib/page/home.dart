@@ -37,8 +37,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int _counter = 0;
   int _delta = 0;
+  List<String> _searchResult = [];
   var _word = "";
   var _explain = "";
+  var _other = "";
   int _tableIndex = 2;
   bool portalOpened = false;
 
@@ -125,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: [
                       Text(
                         '$_word',
-                        style: TextStyle(fontSize: 40),
+                        style: TextStyle(fontSize: 30),
                       ),
                       SizedBox(
                         width: 1,
@@ -144,10 +146,20 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.all(30),
-                  child: Text(
-                    '$_explain',
+                IgnorePointer(
+                  child: Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Text(
+                      '$_explain',
+                    ),
+                  ),
+                ),
+                IgnorePointer(
+                  child: Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Text(
+                      '$_other',
+                    ),
                   ),
                 ),
               ],
@@ -177,10 +189,11 @@ class _MyHomePageState extends State<MyHomePage> {
     refreshWord();
   }
 
-  Future<void> updateMean() async {
+  Future<void> updateData() async {
     print("尝试注入单词 $_word");
     var connection = await client.connect();
     submitMeans(connection, _tableIndex, _word, _explain);
+    submitOthers(connection, _tableIndex, _word, _other);
   }
 
   @override
@@ -192,8 +205,8 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  Future<String> explainWord(String word) async {
-    var ready = "";
+  Future<List<String>> explainWord(String word) async {
+    List<String> ready = [];
     if (word != "") {
       ready = await englishSearch(word);
     }
@@ -296,6 +309,11 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       _tableIndex = result[0];
+      _explain = result[2] ?? '';
+      _other = result[3] ?? '';
+      // words[_counter][2] = _explain;
+      // words[_counter][3] = _other;
+
       return result[1];
     }
   }
@@ -304,11 +322,24 @@ class _MyHomePageState extends State<MyHomePage> {
     print("获取时间 => ${DateTime.now()}");
     _word = pickWord(_counter);
     // _word = "curve";
-    explainWord(_word).then((value) {
-      _explain = value;
-      setState(() {});
-      updateMean();
-    });
+    if (_explain == '' || _other == '') {
+      print("需要搜索");
+      explainWord(_word).then((value) {
+        print("搜索结果 => $value");
+        _searchResult = value;
+        _explain = value.first;
+        _other = '';
+        for (var i = 0; i < value.length; i++) {
+          if (value[i] != value.first) {
+            _other += value[i];
+          }
+        }
+
+        updateData();
+        setState(() {});
+      });
+    }
+    setState(() {});
   }
 
   Future<void> speechWord(int type) async {
