@@ -28,7 +28,12 @@ Future<List<List<dynamic>>> getWords(MySQLConnection? connection) async {
         // print(row.colAt(0));
 
         // print all rows as Map<String, String>
-        readyReturns.add([tableIndex, row.assoc()['word']!]);
+        readyReturns.add([
+          tableIndex,
+          row.assoc()['word']!,
+          row.assoc()['mean']!,
+          row.assoc()['other']!
+        ]);
       }
       tableIndex += 1;
     }
