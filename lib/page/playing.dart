@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' as cup;
+import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WordCard extends StatelessWidget {
+  String word;
+
+  WordCard({super.key, required this.word});
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -14,7 +20,7 @@ class WordCard extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    "Test",
+                    word,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   )
                 ],
@@ -26,7 +32,8 @@ class WordCard extends StatelessWidget {
 }
 
 class Playing extends StatefulWidget {
-  Playing({super.key, required this.title});
+  List<dynamic> wordList;
+  Playing({super.key, required this.title, required this.wordList});
   String title;
   @override
   State<StatefulWidget> createState() {
@@ -37,7 +44,31 @@ class Playing extends StatefulWidget {
 
 class _PlayingState extends State<Playing> {
   bool isDisable = false;
+  bool _showDialog = false;
   List<Widget> _scollingList = [];
+  String inputing = "";
+  TextEditingController controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Set<String> allowList = <String>{widget.title};
+  }
+
+  void submitWord() {
+    setState(() {
+      _scollingList.add(WordCard(
+        word: inputing,
+      ));
+      inputing = "";
+      controller.text = "";
+    });
+  }
+
+  Widget dialogManager(Widget child) {
+    return _showDialog ? child : const SizedBox();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,14 +81,46 @@ class _PlayingState extends State<Playing> {
           IconButton(
               onPressed: () {
                 setState(() {
-                  _scollingList.add(WordCard());
+                  _showDialog = !_showDialog;
                 });
               },
-              icon: Icon(Icons.add))
+              icon: Icon(_showDialog ? Icons.close : Icons.add))
         ],
       ),
       body: Column(
         children: [
+          const SizedBox(
+            height: 30,
+          ),
+          const Divider(),
+          dialogManager(Padding(
+            padding: EdgeInsets.all(20),
+            child: cup.CupertinoTextField(
+              controller: controller,
+              onChanged: (value) {
+                inputing = value;
+              },
+              onSubmitted: (value) {
+                submitWord();
+              },
+            ),
+          )),
+          dialogManager(ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              onTap: () {
+                submitWord();
+              },
+              child: Container(
+                width: 250,
+                height: 40,
+                alignment: Alignment.center,
+                color: Color.fromARGB(255, 232, 220, 90),
+                child: Text("添加"),
+              ),
+            ),
+          )),
+          dialogManager(Divider()),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -66,7 +129,7 @@ class _PlayingState extends State<Playing> {
             ),
           ),
           Container(
-            height: 40,
+            height: 70,
             color: Colors.amber,
           ),
         ],
