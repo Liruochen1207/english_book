@@ -53,6 +53,7 @@ Future<Uint8List?> getSQLVoice(
     MySQLConnection? connection, int tableIndex, String word) async {
   Uint8List? ready;
   String cache = "";
+  print("从数据库搜索单词 $word 的发音");
   if (connection != null && connection!.connected) {
     var result = await connection.execute(
         "SELECT voice FROM word_table0$tableIndex WHERE word = '$word'");
@@ -61,9 +62,13 @@ Future<Uint8List?> getSQLVoice(
       cache += row.assoc()['voice'] ?? '';
     }
   }
-  print("BASE64 SOUND => $cache");
+  // print("BASE64 SOUND => $cache");
   if (cache != "") {
-    ready = Uint8List.fromList(base64Decode(cache));
+    try {
+      ready = Uint8List.fromList(base64Decode(cache));
+    } catch (e) {
+      print(e);
+    }
   }
   return ready;
 }

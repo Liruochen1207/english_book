@@ -1,4 +1,5 @@
 import 'package:english_book/page/exam.dart';
+import 'package:english_book/page/listen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -14,6 +15,7 @@ import 'package:english_book/sql/word.dart';
 import 'package:english_book/http/english_chinese.dart';
 import 'package:flutter/services.dart';
 import 'package:mysql_client/mysql_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 List<List<dynamic>> words = [];
 
@@ -27,7 +29,9 @@ class MyHomePage extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-  const MyHomePage({super.key});
+  MyHomePage({super.key, required this.isDarkness});
+
+  bool isDarkness;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -37,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late AudioPlayer player = AudioPlayer();
   var client = SqlClient();
 
-  int _counter = 0;
+  int _wordIndex = 0;
   int _delta = 0;
   List<String> _searchResult = [];
   var _word = "";
@@ -52,13 +56,33 @@ class _MyHomePageState extends State<MyHomePage> {
   List<EventRegisterHandler> eventHandlerList = [];
   FocusNode backgroundFocus = FocusNode();
 
+  final Future<SharedPreferencesWithCache> _prefs =
+      SharedPreferencesWithCache.create(
+          cacheOptions: const SharedPreferencesWithCacheOptions(
+              // This cache will only accept the key 'counter'.
+              allowList: <String>{'wordIndex'}));
+
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
   get screenHeight => screenSize.height;
 
+  Future<void> _incrementCounter(int delta) async {
+    _wordIndex = _wordIndex + delta;
+    setState(() {});
+    final SharedPreferencesWithCache prefs = await _prefs;
+
+    prefs.setInt('wordIndex', _wordIndex).then((_) {});
+  }
+
   void pageDown() {
-    if (_counter != 0) {
-      _counter -= 1;
+    if (_wordIndex != 0) {
+      _incrementCounter(-1);
+    }
+  }
+
+  void pageUp() {
+    if (_wordIndex < (words.length - 1)) {
+      _incrementCounter(1);
     }
   }
 
@@ -70,12 +94,14 @@ class _MyHomePageState extends State<MyHomePage> {
         return Exam(
           word: _word,
           voice: _voice,
+          isDarkness: widget.isDarkness,
         );
       })).then((value) {
         print("VALUE => ${value.runtimeType}");
         if (value.runtimeType.toString() == "_Map<String, String>") {
           switch (value['result']) {
             case 'exam':
+              FocusScope.of(context).requestFocus(backgroundFocus);
               print("SPEECH");
               speechWord(2);
               break;
@@ -98,7 +124,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor:
+            widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
+        leading: IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return ListenEntrance();
+              }));
+            },
+            icon: Icon(Icons.headphones)),
+        actions: [],
       ),
       body: Stack(
         children: [
@@ -198,9 +233,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> updateData() async {
     print("尝试注入单词 $_word");
-    submitMeans(connection, _tableIndex, _word, _explain);
-    submitOthers(connection, _tableIndex, _word, _other);
-    submitVoice(connection, _tableIndex, _word, _voice);
+    if (words.isNotEmpty) {
+      List args = words[_wordIndex];
+      if (args[2] == "") {
+        submitMeans(connection, _tableIndex, _word, _explain);
+      }
+      if (args[3] == "") {
+        submitOthers(connection, _tableIndex, _word, _other);
+      }
+
+      submitVoice(connection, _tableIndex, _word, _voice);
+    }
   }
 
   @override
@@ -223,6 +266,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    _prefs.then((SharedPreferencesWithCache prefs) {
+      _wordIndex = prefs.getInt('wordIndex') ?? 0;
+    });
     connectSQL();
     // refreshWord();
     // Create the audio player.
@@ -242,7 +288,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ..setOnlyKeyUpAlive()
       ..setHandler(() {
         print("RIGHT");
-        _counter += 1;
+        pageUp();
         refreshWord();
       }));
 
@@ -288,13 +334,13 @@ class _MyHomePageState extends State<MyHomePage> {
           pageDown();
         } else {
           print("page +");
-          _counter += 1;
+          pageUp();
         }
 
         refreshWord();
       } else {
         if (event.position.dx > (screenWidth - (screenWidth / 3))) {
-          _counter += 1;
+          pageUp();
           refreshWord();
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
@@ -329,8 +375,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void voiceManage({required bool doPlaying}) {
     getSQLVoice(connection, _tableIndex, _word).then((voice) {
-      print(voice);
-      if (voice == null) {
+      // print(voice);
+      if (true || voice == null) {
         print("需要从互联网补充音频");
         getSpeechBytes(_word).then((onValue) {
           _voice = onValue;
@@ -357,8 +403,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void refreshWord() {
     print("需要刷新当前单词的时间 => ${DateTime.now()}");
-    _word = pickWord(_counter);
-    voiceManage(doPlaying: false);
+    _word = pickWord(_wordIndex);
+    // voiceManage(doPlaying: false);
 
     // _word = "curve";
     if (_explain == '' || _other == '') {
@@ -393,10 +439,5 @@ class _MyHomePageState extends State<MyHomePage> {
     // await player.setSource(
     //     UrlSource("https://dict.youdao.com/dictvoice?audio=$_word&type=$type"));
     // await player.resume();
-  }
-
-  void _incrementCounter() {
-    _counter++;
-    refreshWord();
   }
 }

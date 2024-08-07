@@ -9,7 +9,13 @@ class LetterCard extends StatefulWidget {
   late String letter;
   late double width;
   late List<void Function()> refresh = [];
-  LetterCard({super.key, required this.letter, required this.width});
+
+  bool isDarkness;
+  LetterCard(
+      {super.key,
+      required this.isDarkness,
+      required this.letter,
+      required this.width});
 
   void change(String newLetter) {
     letter = newLetter;
@@ -41,7 +47,9 @@ class _LetterCardState extends State<LetterCard> {
       child: Container(
         width: letterWidth,
         height: letterWidth,
-        color: Color.fromARGB(121, 235, 219, 99),
+        color: widget.isDarkness
+            ? Color.fromARGB(173, 105, 43, 116)
+            : Color.fromARGB(121, 235, 219, 99),
         child: Text(
           widget.letter,
           style: TextStyle(fontSize: letterWidth / 1.5),
@@ -54,7 +62,12 @@ class _LetterCardState extends State<LetterCard> {
 class Exam extends StatefulWidget {
   late String word;
   late Uint8List? voice;
-  Exam({super.key, required this.word, required this.voice});
+  bool isDarkness;
+  Exam(
+      {super.key,
+      required this.word,
+      required this.voice,
+      required this.isDarkness});
 
   @override
   _ExamState createState() => _ExamState();
@@ -79,20 +92,22 @@ class _ExamState extends State<Exam> {
   List<EventRegisterHandler> eventHandlerList = [];
   FocusNode backgroundFocus = FocusNode();
 
-  Widget letterBuilder(String letter, double letterWidth) {
-    return Padding(
-      padding: EdgeInsets.all(letterWidth / 10),
-      child: Container(
-        width: letterWidth,
-        height: letterWidth,
-        color: Color.fromARGB(121, 235, 219, 99),
-        child: Text(
-          letter,
-          style: TextStyle(fontSize: letterWidth / 1.5),
-        ),
-      ),
-    );
-  }
+  // Widget letterBuilder(String letter, double letterWidth) {
+  //   return Padding(
+  //     padding: EdgeInsets.all(letterWidth / 10),
+  //     child: Container(
+  //       width: letterWidth,
+  //       height: letterWidth,
+  //       color: widget.isDarkness
+  //           ? Color.fromARGB(173, 105, 43, 116)
+  //           : Color.fromARGB(121, 235, 219, 99),
+  //       child: Text(
+  //         letter,
+  //         style: TextStyle(fontSize: letterWidth / 1.5),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   @override
   void didChangeDependencies() {
@@ -106,7 +121,11 @@ class _ExamState extends State<Exam> {
       letterWidth /= 1.4;
       letterList = [];
       for (int i = 0; i < length; i++) {
-        letterList.add(LetterCard(letter: "", width: letterWidth));
+        letterList.add(LetterCard(
+          letter: "",
+          width: letterWidth,
+          isDarkness: widget.isDarkness,
+        ));
       }
       setState(() {});
       lettersInited = true;
