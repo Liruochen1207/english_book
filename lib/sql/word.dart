@@ -7,6 +7,9 @@ import 'package:english_book/sql/client.dart';
 
 Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
     String word, String mean) async {
+  if (tableIndex == -1) {
+    return;
+  }
   if (mean != "") {
     if (connection != null && connection!.connected) {
       var result = await connection.execute(
@@ -21,6 +24,9 @@ Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
 
 Future<void> submitOthers(MySQLConnection? connection, int tableIndex,
     String word, String other) async {
+  if (tableIndex == -1) {
+    return;
+  }
   if (other != "") {
     // print("准备 => $other");
     if (connection != null && connection!.connected) {
@@ -36,6 +42,9 @@ Future<void> submitOthers(MySQLConnection? connection, int tableIndex,
 
 Future<void> submitVoice(MySQLConnection? connection, int tableIndex,
     String word, Uint8List? voice) async {
+  if (tableIndex == -1) {
+    return;
+  }
   // print("准备上传声音 => $voice");
   if (voice != null && connection!.connected && voice.isNotEmpty) {
     if (connection != null) {
@@ -52,6 +61,9 @@ Future<void> submitVoice(MySQLConnection? connection, int tableIndex,
 Future<Uint8List?> getSQLVoice(
     MySQLConnection? connection, int tableIndex, String word) async {
   Uint8List? ready;
+  if (tableIndex == -1) {
+    return null;
+  }
   String cache = "";
   print("从数据库搜索单词 $word 的发音");
   if (connection != null && connection!.connected) {

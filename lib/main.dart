@@ -1,15 +1,23 @@
 import 'package:english_book/page/home.dart';
-
+import 'package:english_book/sql/client.dart';
+import 'package:english_book/sql/word.dart';
 import 'package:flutter/material.dart';
 
+var client = SqlClient();
 void main() {
   runApp(const MyApp());
+}
+
+Future<List<List<dynamic>>> sqlWords() async {
+  var connection = await client.connect();
+  return await getWords(connection);
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     bool isDarkness =
@@ -37,7 +45,10 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
               useMaterial3: true,
             ),
-      home: MyHomePage(isDarkness: isDarkness),
+      home: MyHomePage(
+        isDarkness: isDarkness,
+        wordList: sqlWords,
+      ),
     );
   }
 }

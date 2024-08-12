@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TitleTransformer {
-  static String encode(String title, List<String> wordList) {
+  static String encode(String title, List<dynamic> wordList) {
     Map tw = {title: wordList};
     return json.encode(tw);
   }
@@ -58,7 +58,12 @@ class _ListenningCardState extends State<ListenningCard> {
                     title: widget.title,
                   );
                 }));
-                print("${widget.title} Result ===> $result");
+                // print("${widget.title} Result ===> $result");
+                // print("${widget.title} Result Type ===> ${result.runtimeType}");
+                if (result.runtimeType == List<String>) {
+                  widget.fatherWidgetState.refreshCard(widget, result);
+                  setState(() {});
+                }
               },
               onLongPress: () {
                 setState(() {
@@ -178,6 +183,9 @@ class _ListenEntranceState extends State<ListenEntrance> {
       wordList: newList,
       fatherWidgetState: this,
     ));
+    _listenCardList.add(TitleTransformer.encode(title, newList));
+    final SharedPreferencesWithCache prefs = await _prefs;
+    prefs.setStringList("listenningGroup", _listenCardList);
   }
 
   Future<void> delCard(ListenningCard deletingCard) async {

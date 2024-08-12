@@ -17,8 +17,6 @@ import 'package:flutter/services.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-List<List<dynamic>> words = [];
-
 class MyHomePage extends StatefulWidget {
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -28,8 +26,9 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
-  MyHomePage({super.key, required this.isDarkness});
+  List<List<dynamic>> words = [[]];
+  Future<List<List<dynamic>>> Function() wordList;
+  MyHomePage({super.key, required this.isDarkness, required this.wordList});
 
   bool isDarkness;
 
@@ -70,19 +69,26 @@ class _MyHomePageState extends State<MyHomePage> {
     _wordIndex = _wordIndex + delta;
     setState(() {});
     final SharedPreferencesWithCache prefs = await _prefs;
-
+    if (_tableIndex == -1) {
+      return;
+    }
     prefs.setInt('wordIndex', _wordIndex).then((_) {});
   }
 
   void pageDown() {
+    if (_wordIndex > widget.words.length) {
+      return;
+    }
     if (_wordIndex != 0) {
       _incrementCounter(-1);
+      refreshWord();
     }
   }
 
   void pageUp() {
-    if (_wordIndex < (words.length - 1)) {
+    if (_wordIndex < (widget.words.length - 1)) {
       _incrementCounter(1);
+      refreshWord();
     }
   }
 
@@ -126,13 +132,15 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor:
             widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
-        leading: IconButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return ListenEntrance();
-              }));
-            },
-            icon: Icon(Icons.headphones)),
+        leading: _tableIndex == -1
+            ? null
+            : IconButton(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ListenEntrance();
+                  }));
+                },
+                icon: Icon(Icons.headphones)),
         actions: [],
       ),
       body: Stack(
@@ -222,17 +230,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> connectSQL() async {
-    print("尝试连接");
-    connection = await client.connect();
-    print(connection);
-    words = await getWords(connection);
-    print(words);
-    refreshWord();
-  }
-
   Future<void> updateData() async {
     print("尝试注入单词 $_word");
+    if (_tableIndex == -1) {
+      return;
+    }
+    var words = widget.words;
     if (words.isNotEmpty) {
       List args = words[_wordIndex];
       if (args[2] == "") {
@@ -263,13 +266,28 @@ class _MyHomePageState extends State<MyHomePage> {
     return ready;
   }
 
+  Future<void> connectSQL() async {
+    print("尝试连接");
+    connection = await client.connect();
+    print(connection);
+    // widget.words = await getWords(connection);
+    // refreshWord();
+  }
+
   @override
   void initState() {
     super.initState();
     _prefs.then((SharedPreferencesWithCache prefs) {
       _wordIndex = prefs.getInt('wordIndex') ?? 0;
     });
-    connectSQL();
+    widget.wordList().then((onValue) {
+      widget.words = onValue;
+      print(widget.words);
+      connectSQL();
+      refreshWord();
+      setState(() {});
+    });
+
     // refreshWord();
     // Create the audio player.
     player = AudioPlayer();
@@ -281,7 +299,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ..setHandler(() {
         print("LEFT");
         pageDown();
-        refreshWord();
       }));
 
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.arrowRight)
@@ -289,7 +306,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ..setHandler(() {
         print("RIGHT");
         pageUp();
-        refreshWord();
       }));
 
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.space)
@@ -336,15 +352,11 @@ class _MyHomePageState extends State<MyHomePage> {
           print("page +");
           pageUp();
         }
-
-        refreshWord();
       } else {
         if (event.position.dx > (screenWidth - (screenWidth / 3))) {
           pageUp();
-          refreshWord();
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
-          refreshWord();
         }
       }
 
@@ -353,6 +365,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String pickWord(int index) {
+    var words = widget.words;
     if (words.length == 0) {
       return "";
     } else {
