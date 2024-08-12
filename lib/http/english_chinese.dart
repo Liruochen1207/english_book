@@ -19,25 +19,6 @@ Future<dynamic> dioPost(String url, [query]) async {
   return response.data; // 打印存储的字符串
 }
 
-Future<String> translateLanguage(String sentence ) async {
-  var ready = "";
-  var query = {
-    'inputtext': sentence,
-    'type': 'AUTO',
-  };
-  await dioPost("https://smartisandict.youdao.com/translate", query).then((value) {
-    var htmlString = value.toString();
-    var document = parse(htmlString);
-    document.querySelectorAll("ul").forEach((element) {
-      if (element.attributes['id'].toString()=='translateResult') {
-        element.children.forEach((element) {
-          ready += element.text;
-        });
-      }
-    });
-  });
-  return ready;
-}
 
 Future<String> translateLanguage(String sentence) async {
   var ready = "";
