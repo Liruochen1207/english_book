@@ -19,6 +19,7 @@ Future<dynamic> dioPost(String url, [query]) async {
   return response.data; // 打印存储的字符串
 }
 
+
 Future<String> translateLanguage(String sentence) async {
   var ready = "";
   var query = {
