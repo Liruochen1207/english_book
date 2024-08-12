@@ -260,6 +260,9 @@ class _MyHomePageState extends State<MyHomePage> {
     if (word != "") {
       ready = await englishSearch(word);
     }
+    if (ready.isEmpty) {
+      ready = [await translateLanguage(word)];
+    }
     return ready;
   }
 
