@@ -175,9 +175,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        '$_word',
-                        style: TextStyle(fontSize: 30),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          '$_word',
+                          style: TextStyle(fontSize: 30),
+                        ),
                       ),
                       SizedBox(
                         width: 1,

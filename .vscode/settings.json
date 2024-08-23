@@ -41,7 +41,7 @@
         "editor.defaultFormatter": "Dart-Code.dart-code"
     },
     "dart.flutterCreateAndroidLanguage": "java",
-    "workbench.colorTheme": "Kimbie Dark",
+    "workbench.colorTheme": "Dracula Theme",
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
 }
