@@ -189,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     GestureDetector(
                       child: Container(
-                        width: 200,
+                        width: _word.length< 11 ? _word.length*20: screenWidth/3,
                         child: SingleChildScrollView(
                           controller: wordScrollController,
                           scrollDirection: Axis.horizontal,
@@ -210,7 +210,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         });
                       },
                     ),
-                    isOverflowing&&(!isEndScrolling) ? Transform.translate(offset: Offset(4, 14), child: Icon(Icons.more_horiz_sharp, size: 18,),) : const SizedBox(),
+                    isOverflowing&&(!isEndScrolling) ? Transform.translate(offset: Offset(4, 0), child: Text(
+                      '...',
+                      style: TextStyle(fontSize: 35),
+                    ),) : const SizedBox(),
                     IconButton(
                         onPressed: () {
                           speechWord(2);
@@ -332,10 +335,9 @@ class _MyHomePageState extends State<MyHomePage> {
       refreshWord();
       setState(() {});
 
-      isOverflowing = wordScrollController.position.maxScrollExtent > 0;
       wordScrollController.addListener(() {
         // 检查最大滚动位置是否大于0，如果是，则表示内容超出了可视范围
-        isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+        isOverflowing = _word.length > 10;
         // 根据需要更新状态或执行其他操作
         setState(() {
 
@@ -494,6 +496,8 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {});
       });
     }
+    isOverflowing = _word.length > 10;
+    isEndScrolling = false;
     setState(() {});
   }
 
