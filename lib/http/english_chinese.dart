@@ -82,13 +82,13 @@ Future<Uint8List> getSpeechBytes(String word) async {
 Future<void> getAiExplain(
     dynamic conversationPageState, void Function() onRefresh) async {
   final dio = Dio();
-
+  String avengeSize = Platform.isWindows ? "大" : "小";
   var data = {
     'content': [
       {'role': 'system', 'content': '美观的markdown格式输出'},
       {
         'role': 'system',
-        'content': '请为${Platform.operatingSystem}设备输出合适大小的markdown'
+        'content': '请为${Platform.operatingSystem}设备输出平均字体大小偏$avengeSize的严格markdown格式文本'
       },
       {'role': 'system', 'content': '每一个你给的英文句子需要翻译成中文写在它下面'},
       {'role': 'system', 'content': '你需要为用户提供同义替换词、单词造句、语境说明、英英牛津该词原文'},

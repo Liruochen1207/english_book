@@ -240,20 +240,23 @@ class _ListenEntranceState extends State<ListenEntrance> {
     return Scaffold(
       appBar: AppBar(
         title: Text("创建听写任务组"),
-        actions: [
-          IconButton(
-              onPressed: () {
-                setState(() {
-                  addLisCard();
-                });
-              },
-              icon: Icon(Icons.add))
-        ],
+        actions: [],
       ),
       body: SingleChildScrollView(
         child: Column(
           verticalDirection: VerticalDirection.up,
           children: _listenningGroup,
+        ),
+      ),
+      floatingActionButton: Transform.translate(
+        offset: Offset(-20, -20),
+        child: FloatingActionButton(
+          onPressed: () {
+            setState(() {
+              addLisCard();
+            });
+          },
+          child: Icon(Icons.add),
         ),
       ),
     );

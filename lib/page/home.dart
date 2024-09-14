@@ -51,6 +51,9 @@ class _MyHomePageState extends State<MyHomePage> {
   int _tableIndex = 2;
   bool portalOpened = false;
   MySQLConnection? connection;
+  ScrollController wordScrollController = ScrollController();
+  bool isOverflowing = false;
+  bool isEndScrolling = false;
 
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
@@ -143,16 +146,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 icon: Icon(Icons.headphones)),
         actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return ConversationPage(
-                    isDarkness: widget.isDarkness,
-                    word: _word,
-                  );
-                }));
-              },
-              icon: Icon(Icons.question_answer)),
+          // IconButton(
+          //     onPressed: () {
+          //       Navigator.push(context, MaterialPageRoute(builder: (context) {
+          //         return ConversationPage(
+          //           isDarkness: widget.isDarkness,
+          //           word: _word,
+          //         );
+          //       }));
+          //     },
+          //     icon: Icon(Icons.question_answer)),
         ],
       ),
       body: Stack(
@@ -182,22 +185,42 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               Padding(
                 padding: EdgeInsets.all(30),
-                child: Text(
-                  '$_word',
-                  softWrap: true,
-                  style: TextStyle(fontSize: 30),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      child: Container(
+                        width: 200,
+                        child: SingleChildScrollView(
+                          controller: wordScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            '$_word',
+                            style: TextStyle(fontSize: 35),
+                          ),
+                        ),
+                      ),
+                      onHorizontalDragUpdate: (value) {
+                        double maxPos = wordScrollController.position.maxScrollExtent;
+                        double lastPos = wordScrollController.offset;
+                        wordScrollController.jumpTo(lastPos -= value.delta.dx);
+                        double nowPos = wordScrollController.offset;
+                        isEndScrolling = nowPos >= maxPos;
+                        setState(() {
+
+                        });
+                      },
+                    ),
+                    isOverflowing&&(!isEndScrolling) ? Transform.translate(offset: Offset(4, 14), child: Icon(Icons.more_horiz_sharp, size: 18,),) : const SizedBox(),
+                    IconButton(
+                        onPressed: () {
+                          speechWord(2);
+                        },
+                        icon: Icon(
+                          Icons.volume_up,
+                          size: 20,
+                        )),
+                  ],
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(30, 0, 0, 0),
-                child: IconButton(
-                    onPressed: () {
-                      speechWord(2);
-                    },
-                    icon: Icon(
-                      Icons.volume_up,
-                      size: 20,
-                    )),
               ),
               IgnorePointer(
                 child: Padding(
@@ -225,6 +248,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Icon(Icons.library_books),
                 onPressed: () {
                   gatePortal();
+                },
+              )),
+          Positioned(
+              bottom: 40,
+              right: 120,
+              child: FloatingActionButton(
+                child: Text(
+                  "AI",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                ),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ConversationPage(
+                      isDarkness: widget.isDarkness,
+                      word: _word,
+                    );
+                  }));
                 },
               )),
         ],
@@ -291,6 +331,16 @@ class _MyHomePageState extends State<MyHomePage> {
       connectSQL();
       refreshWord();
       setState(() {});
+
+      isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+      wordScrollController.addListener(() {
+        // 检查最大滚动位置是否大于0，如果是，则表示内容超出了可视范围
+        isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+        // 根据需要更新状态或执行其他操作
+        setState(() {
+
+        });
+      });
     });
 
     // refreshWord();
@@ -362,6 +412,8 @@ class _MyHomePageState extends State<MyHomePage> {
           pageUp();
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
+        } else {
+          speechWord(2);
         }
       }
 
