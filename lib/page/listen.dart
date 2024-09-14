@@ -22,6 +22,7 @@ class ListenningCard extends StatefulWidget {
       required this.title,
       required this.wordList});
   String title = "";
+  String cache = "";
   List<dynamic> wordList = [];
   var fatherWidgetState;
 
@@ -47,6 +48,17 @@ class _ListenningCardState extends State<ListenningCard> {
   void dispose() {
     _rename_controller.dispose();
     super.dispose();
+  }
+
+  Future<void> rename()async {
+    await widget.fatherWidgetState.delCard(widget);
+    widget.title = widget.cache;
+    await widget.fatherWidgetState._listenningGroup.add(widget);
+    await widget.fatherWidgetState._listenCardList.add(TitleTransformer.encode(widget.title, widget.wordList));
+    final SharedPreferencesWithCache prefs = await widget.fatherWidgetState._prefs;
+    prefs.setStringList("listenningGroup", widget.fatherWidgetState._listenCardList);
+    _isEditing = false;
+    _isShowingPanel = false;
   }
 
   @override
@@ -173,7 +185,7 @@ class _ListenningCardState extends State<ListenningCard> {
                 width: MediaQuery.of(context).size.width * 8 / 10,
                 child: TextField(
                   onChanged: (value){
-                    widget.title = value;
+                    widget.cache = value;
                   },
                   controller: _rename_controller,
                 ),
@@ -189,11 +201,11 @@ class _ListenningCardState extends State<ListenningCard> {
                     child: Text("保存"),
                   ),
                   onTap: () {
-                    setState(() {
-                      widget.fatherWidgetState.refreshCard(widget, widget.wordList);
-                      _isEditing = false;
-                      _isShowingPanel = false;
-                    });
+                      rename().then((onValue){
+                        setState(() {
+
+                        });
+                      });
                   },
                 ),
               ),
