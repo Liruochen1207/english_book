@@ -7,7 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'listen.dart';
 
 class CollectPage extends StatefulWidget {
-  const CollectPage({super.key});
+  final String word;
+  const CollectPage({super.key, required this.word});
 
   @override
   State<CollectPage> createState() => _CollectPageState();
@@ -22,6 +23,27 @@ class _CollectPageState extends State<CollectPage> {
               allowList: <String>{'listenningGroup'}));
 
   List<String> _listenCardList = [];
+
+  Future<void> refreshListeningList(String title) async {
+    String? waitRef;
+    String? newList;
+    _listenCardList.forEach((value) {
+      Map<String, dynamic> de = TitleTransformer.decode(value);
+      String tit = de.keys.first;
+      if (tit == title) {
+        de.values.first.add(widget.word);
+        waitRef = value;
+        newList = TitleTransformer.encode(tit, de.values.first);
+      }
+    });
+    if (waitRef != null && newList != null){
+      _listenCardList.remove(waitRef);
+      _listenCardList.add(newList!);
+    }
+    final SharedPreferencesWithCache prefs = await _group_prefs;
+    prefs.setStringList("listenningGroup", _listenCardList);
+  }
+
 
   Future<void> getListeningList() async {
     await _group_prefs.then((SharedPreferencesWithCache prefs) {
@@ -45,8 +67,15 @@ class _CollectPageState extends State<CollectPage> {
     });
   }
 
-  Future<void> commitListeningList() async {
-
+  Future<void> addSectionCard() async {
+    String title = DateTime.now().toString();
+    _sectionCardList.add(SectionCard(
+      title: title,
+      fatherWidgetState: this, li: [],
+    ));
+    _listenCardList.add(TitleTransformer.encode(title, []));
+    final SharedPreferencesWithCache prefs = await _group_prefs;
+    prefs.setStringList("listenningGroup", _listenCardList);
   }
 
   @override
@@ -65,6 +94,17 @@ class _CollectPageState extends State<CollectPage> {
           children: _sectionCardList,
         ),
       ),
+      floatingActionButton: Transform.translate(
+        offset: Offset(-20, -20),
+        child: FloatingActionButton(
+          onPressed: () {
+            setState(() {
+              addSectionCard();
+            });
+          },
+          child: Icon(Icons.add),
+        ),
+      ),
     );
   }
 }
@@ -81,20 +121,31 @@ class SectionCard extends StatefulWidget {
 }
 
 class _SectionCardState extends State<SectionCard> {
+
+  Future<void> safetyQuit() async{
+    await widget.fatherWidgetState.refreshListeningList(widget.title);
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: InkWell(
         onTap: (){
-          // widget.fatherWidgetState.
+          safetyQuit();
         },
-        child: Padding(
-          padding: EdgeInsets.all(15),
-          child: Text(
-            widget.title,
-            style: TextStyle(fontSize: 12),
-          ),
-        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(15),
+              child: Text(
+                widget.title,
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+            Divider(),
+          ],
+        )
       ),
     );
   }

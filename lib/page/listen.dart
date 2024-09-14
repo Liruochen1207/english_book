@@ -31,13 +31,22 @@ class ListenningCard extends StatefulWidget {
 
 class _ListenningCardState extends State<ListenningCard> {
   bool _isShowingPanel = false;
+  bool _isEditing = false;
   late final Future<SharedPreferencesWithCache> _fatherPrefs;
+  final TextEditingController _rename_controller = TextEditingController();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _fatherPrefs = widget.fatherWidgetState.prefs;
+    _rename_controller.text = widget.title;
+  }
+
+  @override
+  void dispose() {
+    _rename_controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -107,13 +116,13 @@ class _ListenningCardState extends State<ListenningCard> {
                           width: 100,
                           height: 70,
                           alignment: Alignment.center,
-                          color: Colors.red,
-                          child: Text("删除"),
+                          color: Colors.green,
+                          child: Text("重命名"),
                         ),
                         onTap: () {
-                          print("d");
-                          _isShowingPanel = false;
-                          widget.fatherWidgetState.delCard(widget);
+                          setState(() {
+                            _isEditing = true;
+                          });
                         },
                       ),
                       InkWell(
@@ -131,12 +140,65 @@ class _ListenningCardState extends State<ListenningCard> {
                           });
                         },
                       ),
+                      InkWell(
+                        child: Container(
+                          width: 100,
+                          height: 70,
+                          alignment: Alignment.center,
+                          color: Colors.red,
+                          child: Text("删除"),
+                        ),
+                        onTap: () {
+                          print("d");
+                          _isShowingPanel = false;
+                          widget.fatherWidgetState.delCard(widget);
+                        },
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-          )
+          ),
+          Visibility(
+            visible: _isEditing,
+              child: Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+          )),
+          Visibility(
+            visible: _isEditing,
+              child: Row(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width * 8 / 10,
+                child: TextField(
+                  onChanged: (value){
+                    widget.title = value;
+                  },
+                  controller: _rename_controller,
+                ),
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width * 2 / 10,
+                child: InkWell(
+                  child: Container(
+                    width: 100,
+                    height: 70,
+                    alignment: Alignment.center,
+                    color: Colors.blue,
+                    child: Text("保存"),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      widget.fatherWidgetState.refreshCard(widget, widget.wordList);
+                      _isEditing = false;
+                      _isShowingPanel = false;
+                    });
+                  },
+                ),
+              ),
+            ],
+          )),
         ],
       ),
     );
