@@ -54,6 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ScrollController wordScrollController = ScrollController();
   bool isOverflowing = false;
   bool isEndScrolling = false;
+  double textProportion = 15.6;
 
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
@@ -131,7 +132,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-
+    try {
+      isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+    } catch (e) {}
     return Scaffold(
       appBar: AppBar(
         backgroundColor:
@@ -189,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     GestureDetector(
                       child: Container(
-                        width: _word.length< 11 ? _word.length*20: screenWidth/3,
+                        width: screenWidth/4,
                         child: SingleChildScrollView(
                           controller: wordScrollController,
                           scrollDirection: Axis.horizontal,
@@ -210,7 +213,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         });
                       },
                     ),
-                    isOverflowing&&(!isEndScrolling) ? Transform.translate(offset: Offset(4, 0), child: Text(
+                    (isOverflowing&&(!isEndScrolling)) ? Transform.translate(offset: Offset(4, 0), child: Text(
                       '...',
                       style: TextStyle(fontSize: 35),
                     ),) : const SizedBox(),
@@ -257,9 +260,11 @@ class _MyHomePageState extends State<MyHomePage> {
               bottom: 40,
               right: 120,
               child: FloatingActionButton(
-                child: Text(
-                  "AI",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                child: const Center(
+                  child: Text(
+                    "AI",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -334,15 +339,6 @@ class _MyHomePageState extends State<MyHomePage> {
       connectSQL();
       refreshWord();
       setState(() {});
-
-      wordScrollController.addListener(() {
-        // 检查最大滚动位置是否大于0，如果是，则表示内容超出了可视范围
-        isOverflowing = _word.length > 10;
-        // 根据需要更新状态或执行其他操作
-        setState(() {
-
-        });
-      });
     });
 
     // refreshWord();
@@ -363,6 +359,33 @@ class _MyHomePageState extends State<MyHomePage> {
       ..setHandler(() {
         print("RIGHT");
         pageUp();
+      }));
+
+    player.setReleaseMode(ReleaseMode.stop);
+    eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.pageUp)
+      ..setHandler(() {
+        print("LEFT");
+        double maxPos = wordScrollController.position.maxScrollExtent;
+        double lastPos = wordScrollController.offset;
+        wordScrollController.jumpTo(lastPos -= 12);
+        double nowPos = wordScrollController.offset;
+        isEndScrolling = nowPos >= maxPos;
+        setState(() {
+
+        });
+      }));
+
+    eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.pageDown)
+      ..setHandler(() {
+        print("RIGHT");
+        double maxPos = wordScrollController.position.maxScrollExtent;
+        double lastPos = wordScrollController.offset;
+        wordScrollController.jumpTo(lastPos += 12);
+        double nowPos = wordScrollController.offset;
+        isEndScrolling = nowPos >= maxPos;
+        setState(() {
+
+        });
       }));
 
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.space)
@@ -496,7 +519,7 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {});
       });
     }
-    isOverflowing = _word.length > 10;
+    isOverflowing = _word.length*textProportion > screenWidth/4;
     isEndScrolling = false;
     setState(() {});
   }
