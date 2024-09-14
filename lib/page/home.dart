@@ -1,3 +1,4 @@
+import 'package:english_book/page/collect.dart';
 import 'package:english_book/page/conversation.dart';
 import 'package:english_book/page/exam.dart';
 import 'package:english_book/page/listen.dart';
@@ -65,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
           cacheOptions: const SharedPreferencesWithCacheOptions(
               // This cache will only accept the key 'counter'.
               allowList: <String>{'wordIndex'}));
+
 
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
@@ -136,6 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (!Platform.isAndroid) {
         isOverflowing = wordScrollController.position.maxScrollExtent > 0;
       }
+
     } catch (e) {}
     return Scaffold(
       appBar: AppBar(
@@ -194,13 +197,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     GestureDetector(
                       child: Container(
-                        width: screenWidth / 4,
+                        width: screenWidth / 2,
                         child: SingleChildScrollView(
                           controller: wordScrollController,
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             '$_word',
-                            style: TextStyle(fontSize: 35),
+                            style: TextStyle(fontSize: Platform.isAndroid ? 32 : 35),
                           ),
                         ),
                       ),
@@ -233,8 +236,19 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                         icon: Icon(
                           Icons.volume_up,
-                          size: 20,
+                          size: 26,
                         )),
+                    IconButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) {
+                            return CollectPage();
+                          }));
+                        },
+                        icon: Icon(
+                              Icons.star_border,
+                              size: 26,
+                          color: Colors.yellow,
+                            )),
                   ],
                 ),
               ),
@@ -318,6 +332,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+
   Future<List<String>> explainWord(String word) async {
     List<String> ready = [];
     if (word != "") {
@@ -348,9 +363,21 @@ class _MyHomePageState extends State<MyHomePage> {
       print(widget.words);
       connectSQL();
       refreshWord();
+      
       setState(() {});
     });
+    if (Platform.isAndroid){
+      wordScrollController.addListener((){
+        isEndScrolling = wordScrollController.offset >= wordScrollController.position.maxScrollExtent;
+        if (!isEndScrolling){
+          isOverflowing = true;
+        }
+        setState(() {
 
+        });
+        print(isEndScrolling);
+      });
+    }
     // refreshWord();
     // Create the audio player.
     player = AudioPlayer();
@@ -450,6 +477,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
       _delta = 0;
     });
+    setState(() {
+
+    });
   }
 
   String pickWord(int index) {
@@ -522,10 +552,14 @@ class _MyHomePageState extends State<MyHomePage> {
         }
 
         updateData();
+        if (Platform.isAndroid){
+          isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+          isEndScrolling = false;
+        }
         setState(() {});
       });
     }
-    isOverflowing = _word.length * textProportion > screenWidth / 4;
+    isOverflowing = _word.length * textProportion > screenWidth / 2;
     isEndScrolling = false;
     setState(() {});
   }
