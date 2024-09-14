@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:english_book/page/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart' as cup;
@@ -130,6 +132,14 @@ class _PlayingState extends State<Playing> {
   List<Widget> _scollingList = [];
   String inputing = "";
   TextEditingController controller = TextEditingController();
+  Timer? timer;
+  int index = 0;
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -253,7 +263,25 @@ class _PlayingState extends State<Playing> {
                       width: 20,
                     ),
                     IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          List<String> wordList = [];
+                          for (var i = 0; i < _scollingList.length; i++) {
+                            WordCard card = _scollingList[i] as WordCard;
+                            wordList.add(card.word);
+                          }
+                          int repeatTimes = 2;
+                          timer = Timer.periodic(Duration(milliseconds: 1500),
+                              (timer) {
+                            if (index < wordList.length) {
+                              print(wordList[index]);
+                              index++;
+                            } else {
+                              print('已完成打印所有列表项');
+                              index = 0;
+                              timer.cancel();
+                            }
+                          });
+                        },
                         icon: Icon(
                           Icons.play_arrow,
                           size: 34,

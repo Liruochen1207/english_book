@@ -1,3 +1,4 @@
+import 'package:english_book/page/conversation.dart';
 import 'package:english_book/page/exam.dart';
 import 'package:english_book/page/listen.dart';
 import 'package:flutter/foundation.dart';
@@ -141,7 +142,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   }));
                 },
                 icon: Icon(Icons.headphones)),
-        actions: [],
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return ConversationPage(
+                    isDarkness: widget.isDarkness,
+                    word: _word,
+                  );
+                }));
+              },
+              icon: Icon(Icons.question_answer)),
+        ],
       ),
       body: Stack(
         children: [
@@ -151,72 +163,59 @@ class _MyHomePageState extends State<MyHomePage> {
             eventHandlerList: eventHandlerList,
             color: Color.fromARGB(0, 215, 223, 180),
           ),
-          Center(
-            child: Column(
-              // Column is also a layout widget. It takes a list of children and
-              // arranges them vertically. By default, it sizes itself to fit its
-              // children horizontally, and tries to be as tall as its parent.
-              //
-              // Column has various properties to control how it sizes itself and
-              // how it positions its children. Here we use mainAxisAlignment to
-              // center the children vertically; the main axis here is the vertical
-              // axis because Columns are vertical (the cross axis would be
-              // horizontal).
-              //
-              // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-              // action in the IDE, or press "p" in the console), to see the
-              // wireframe for each widget.
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
+          Column(
+            // Column is also a layout widget. It takes a list of children and
+            // arranges them vertically. By default, it sizes itself to fit its
+            // children horizontally, and tries to be as tall as its parent.
+            //
+            // Column has various properties to control how it sizes itself and
+            // how it positions its children. Here we use mainAxisAlignment to
+            // center the children vertically; the main axis here is the vertical
+            // axis because Columns are vertical (the cross axis would be
+            // horizontal).
+            //
+            // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+            // action in the IDE, or press "p" in the console), to see the
+            // wireframe for each widget.
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.all(30),
+                child: Text(
+                  '$_word',
+                  softWrap: true,
+                  style: TextStyle(fontSize: 30),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(30, 0, 0, 0),
+                child: IconButton(
+                    onPressed: () {
+                      speechWord(2);
+                    },
+                    icon: Icon(
+                      Icons.volume_up,
+                      size: 20,
+                    )),
+              ),
+              IgnorePointer(
+                child: Padding(
                   padding: EdgeInsets.all(30),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Text(
-                          '$_word',
-                          style: TextStyle(fontSize: 30),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 1,
-                      ),
-                      // IconButton(onPressed: (){
-                      //   speechWord(1);
-                      // }, icon: Icon(Icons.volume_up, size: 20,)),
-                      IconButton(
-                          onPressed: () {
-                            speechWord(2);
-                          },
-                          icon: Icon(
-                            Icons.volume_up,
-                            size: 20,
-                          )),
-                    ],
+                  child: Text(
+                    '$_explain',
                   ),
                 ),
-                IgnorePointer(
-                  child: Padding(
-                    padding: EdgeInsets.all(30),
-                    child: Text(
-                      '$_explain',
-                    ),
+              ),
+              IgnorePointer(
+                child: Padding(
+                  padding: EdgeInsets.all(30),
+                  child: Text(
+                    '$_other',
                   ),
                 ),
-                IgnorePointer(
-                  child: Padding(
-                    padding: EdgeInsets.all(30),
-                    child: Text(
-                      '$_other',
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ), // This trailing comma makes auto-formatting nicer for build methods.
 
           Positioned(

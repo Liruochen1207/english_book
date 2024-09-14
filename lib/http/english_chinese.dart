@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:english_book/page/conversation.dart';
 
 import 'package:html/dom.dart';
 import 'package:html/dom_parsing.dart';
@@ -18,7 +20,6 @@ Future<dynamic> dioPost(String url, [query]) async {
   final response = await dio.post(url, queryParameters: query);
   return response.data; // 打印存储的字符串
 }
-
 
 Future<String> translateLanguage(String sentence) async {
   var ready = "";
@@ -76,6 +77,42 @@ Future<Uint8List> getSpeechBytes(String word) async {
       queryParameters: {"audio": word, "type": 2});
   print(response.data.runtimeType);
   return response.data;
+}
+
+Future<void> getAiExplain(
+    dynamic conversationPageState, void Function() onRefresh) async {
+  final dio = Dio();
+
+  var data = {
+    'content': [
+      {'role': 'system', 'content': '美观的markdown格式输出'},
+      {
+        'role': 'system',
+        'content': '请为${Platform.operatingSystem}设备输出合适大小的markdown'
+      },
+      {'role': 'system', 'content': '每一个你给的英文句子需要翻译成中文写在它下面'},
+      {'role': 'system', 'content': '你需要为用户提供同义替换词、单词造句、语境说明、英英牛津该词原文'},
+      {'role': 'user', 'content': conversationPageState.widget.word}
+    ]
+  };
+  try {
+    Response<ResponseBody> response = await dio.post(
+        'http://47.108.91.180:5000/stream',
+        data: data,
+        options: Options(responseType: ResponseType.stream));
+    response.data?.stream.listen((data) {
+      String received = utf8.decode(data);
+      print(received);
+      conversationPageState.conversationText += received;
+      onRefresh();
+    }, onError: (error) {
+      print("Stream error $error");
+    }, onDone: () {
+      print("Stream close");
+    });
+  } catch (e) {
+    print(e);
+  }
 }
 
 Future<void> main() async {
