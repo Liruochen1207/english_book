@@ -133,7 +133,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     try {
-      isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+      if (!Platform.isAndroid) {
+        isOverflowing = wordScrollController.position.maxScrollExtent > 0;
+      }
     } catch (e) {}
     return Scaffold(
       appBar: AppBar(
@@ -192,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     GestureDetector(
                       child: Container(
-                        width: screenWidth/4,
+                        width: screenWidth / 4,
                         child: SingleChildScrollView(
                           controller: wordScrollController,
                           scrollDirection: Axis.horizontal,
@@ -203,20 +205,28 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       onHorizontalDragUpdate: (value) {
-                        double maxPos = wordScrollController.position.maxScrollExtent;
-                        double lastPos = wordScrollController.offset;
-                        wordScrollController.jumpTo(lastPos -= value.delta.dx);
-                        double nowPos = wordScrollController.offset;
-                        isEndScrolling = nowPos >= maxPos;
-                        setState(() {
-
-                        });
+                        if (!Platform.isAndroid) {
+                          double maxPos =
+                              wordScrollController.position.maxScrollExtent;
+                          double lastPos = wordScrollController.offset;
+                          wordScrollController
+                              .jumpTo(lastPos -= value.delta.dx);
+                          double nowPos = wordScrollController.offset;
+                          isEndScrolling = nowPos >= maxPos;
+                          print(nowPos);
+                          setState(() {});
+                        }
                       },
                     ),
-                    (isOverflowing&&(!isEndScrolling)) ? Transform.translate(offset: Offset(4, 0), child: Text(
-                      '...',
-                      style: TextStyle(fontSize: 35),
-                    ),) : const SizedBox(),
+                    (isOverflowing && (!isEndScrolling))
+                        ? Transform.translate(
+                            offset: Offset(4, 0),
+                            child: Text(
+                              '...',
+                              style: TextStyle(fontSize: 35),
+                            ),
+                          )
+                        : const SizedBox(),
                     IconButton(
                         onPressed: () {
                           speechWord(2);
@@ -370,9 +380,7 @@ class _MyHomePageState extends State<MyHomePage> {
         wordScrollController.jumpTo(lastPos -= 12);
         double nowPos = wordScrollController.offset;
         isEndScrolling = nowPos >= maxPos;
-        setState(() {
-
-        });
+        setState(() {});
       }));
 
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.pageDown)
@@ -383,9 +391,7 @@ class _MyHomePageState extends State<MyHomePage> {
         wordScrollController.jumpTo(lastPos += 12);
         double nowPos = wordScrollController.offset;
         isEndScrolling = nowPos >= maxPos;
-        setState(() {
-
-        });
+        setState(() {});
       }));
 
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.space)
@@ -519,7 +525,7 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {});
       });
     }
-    isOverflowing = _word.length*textProportion > screenWidth/4;
+    isOverflowing = _word.length * textProportion > screenWidth / 4;
     isEndScrolling = false;
     setState(() {});
   }
