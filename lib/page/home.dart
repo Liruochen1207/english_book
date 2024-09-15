@@ -320,9 +320,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void randomWord(){
+  Future<void> randomWord() async {
     _wordIndex = Random().nextInt(widget.words.length);
     refreshWord();
+    final SharedPreferencesWithCache prefs = await _prefs;
+    prefs.setInt('wordIndex', _wordIndex).then((_) {});
   }
 
   @override
