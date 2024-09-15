@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:english_book/page/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart' as cup;
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class WordCard extends StatefulWidget {
   String word;
   var fatherWidgetState;
+  void Function() refresh = (){};
   WordCard({super.key, required this.word, required this.fatherWidgetState});
 
   Future<List<List<dynamic>>> showWord() async {
@@ -26,6 +28,8 @@ class WordCard extends StatefulWidget {
 
 class _WordCardState extends State<WordCard> {
   bool _showingOptions = false;
+  bool _isOverflowing = false;
+  ScrollController controller = ScrollController();
 
   void cancelOptions() {
     print("CANCEL");
@@ -36,78 +40,146 @@ class _WordCardState extends State<WordCard> {
     }
   }
 
+  void assertOverflowing() {
+    setState(() {
+      _isOverflowing =
+          controller.position.maxScrollExtent > 0 && (! (controller.offset == controller.position.maxScrollExtent));
+    });
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    widget.refresh = (){
+      assertOverflowing();
+    };
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      assertOverflowing();
+    });
+
+  }
+
+
+  @override
+  void dispose() {
+    _isOverflowing = false;
+    setState(() {
+
+    });
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isDarkness =
         MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return Padding(
         padding: EdgeInsets.all(10),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            color: isDarkness
-                ? Colors.white12
-                : Color.fromARGB(255, 238, 237, 237),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return MyHomePage(
-                      isDarkness: isDarkness, wordList: widget.showWord);
-                }));
-              },
-              onLongPress: cancelOptions,
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Text(
-                          widget.word,
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500),
-                        )
-                      ],
-                    ),
-                  ),
-                  Visibility(
-                    child: Container(
-                      width: double.infinity,
-                      height: 70,
-                      color: Colors.black26,
-                    ),
-                    visible: _showingOptions,
-                  ),
-                  Visibility(
-                      visible: _showingOptions,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          InkWell(
-                            child: Container(
-                              width: 100,
-                              height: 70,
-                              alignment: Alignment.center,
-                              color: Colors.red,
-                              child: Text("删除"),
+        child: Container(
+          alignment: Alignment.center,
+          width: MediaQuery.of(context).size.width,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              color: isDarkness
+                  ? Colors.white12
+                  : Color.fromARGB(255, 238, 237, 237),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return MyHomePage(
+                        isDarkness: isDarkness, wordList: widget.showWord);
+                  })).then((onValue) {
+                    while (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  });
+                },
+                onLongPress: cancelOptions,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 6 / 10,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width * 5.5 / 10,
+                              child: SingleChildScrollView(
+                                controller: controller
+                                  ..addListener(() {
+                                    assertOverflowing();
+                                  }),
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      widget.word,
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                              ),
                             ),
-                            onTap: () {
-                              print("d");
-                              widget.fatherWidgetState.delWordCard(widget);
-                            },
-                          ),
-                          InkWell(
+                            const SizedBox(width: 5,),
+                            _isOverflowing
+                                ? Container(
+                              child: Text(
+                                '...',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            )
+                                : const SizedBox(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Visibility(
+                      child: Container(
+                        width: double.infinity,
+                        height: 70,
+                        color: Colors.black26,
+                      ),
+                      visible: _showingOptions,
+                    ),
+                    Visibility(
+                        visible: _showingOptions,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            InkWell(
                               child: Container(
                                 width: 100,
                                 height: 70,
                                 alignment: Alignment.center,
-                                color: Colors.amber[800],
-                                child: Text("取消"),
+                                color: Colors.red,
+                                child: Text("删除"),
                               ),
-                              onTap: cancelOptions),
-                        ],
-                      ))
-                ],
+                              onTap: () {
+                                print("d");
+                                widget.fatherWidgetState.delWordCard(widget);
+                              },
+                            ),
+                            InkWell(
+                                child: Container(
+                                  width: 100,
+                                  height: 70,
+                                  alignment: Alignment.center,
+                                  color: Colors.amber[800],
+                                  child: Text("取消"),
+                                ),
+                                onTap: cancelOptions),
+                          ],
+                        ))
+                  ],
+                ),
               ),
             ),
           ),
@@ -151,23 +223,29 @@ class _PlayingState extends State<Playing> {
         fatherWidgetState: this,
       ));
     });
+
   }
+
+
 
   void refreshState() {
     setState(() {});
   }
 
+
   void delWordCard(WordCard delCard) {
-    _scollingList.remove(delCard);
-    setState(() {});
+    setState(() {
+      _scollingList.remove(delCard);
+    });
   }
 
   void submitWord() {
     setState(() {
-      _scollingList.add(WordCard(
+      WordCard card = WordCard(
         word: inputing,
         fatherWidgetState: this,
-      ));
+      );
+      _scollingList.add(card);
       inputing = "";
       controller.text = "";
     });
@@ -186,6 +264,8 @@ class _PlayingState extends State<Playing> {
     return _showDialog ? child : const SizedBox();
   }
 
+  
+  
   @override
   Widget build(BuildContext context) {
     bool isDarkness =

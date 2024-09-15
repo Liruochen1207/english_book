@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:english_book/page/collect.dart';
 import 'package:english_book/page/conversation.dart';
 import 'package:english_book/page/exam.dart';
@@ -154,16 +156,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 icon: Icon(Icons.headphones)),
         actions: [
-          // IconButton(
-          //     onPressed: () {
-          //       Navigator.push(context, MaterialPageRoute(builder: (context) {
-          //         return ConversationPage(
-          //           isDarkness: widget.isDarkness,
-          //           word: _word,
-          //         );
-          //       }));
-          //     },
-          //     icon: Icon(Icons.question_answer)),
+          IconButton(
+              onPressed: () {
+                randomWord();
+              },
+              icon: Icon(Icons.sync)),
         ],
       ),
       body: Stack(
@@ -247,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         icon: Icon(
                               Icons.star_border,
                               size: 26,
-                          color: Colors.yellow,
+                          color: Colors.amber,
                             )),
                   ],
                 ),
@@ -321,6 +318,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
       submitVoice(connection, _tableIndex, _word, _voice);
     }
+  }
+
+  void randomWord(){
+    _wordIndex = Random().nextInt(widget.words.length);
+    refreshWord();
   }
 
   @override
