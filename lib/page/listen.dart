@@ -4,6 +4,8 @@ import 'package:english_book/page/playing.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../cache.dart';
+
 class TitleTransformer {
   static String encode(String title, List<dynamic> wordList) {
     Map tw = {title: wordList};
@@ -50,7 +52,7 @@ class _ListenningCardState extends State<ListenningCard> {
     super.dispose();
   }
 
-  Future<void> rename()async {
+  Future<void> rename() async {
     await widget.fatherWidgetState.delCard(widget);
     widget.title = widget.cache;
     await widget.fatherWidgetState._listenningGroup.add(widget);
@@ -75,16 +77,16 @@ class _ListenningCardState extends State<ListenningCard> {
                 var result = await Navigator.push(context,
                     MaterialPageRoute(builder: (context) {
                   return Playing(
-                    wordList: widget.wordList,
-                    title: widget.title,
+                    title: widget.title, wordList: widget.wordList,
                   );
                 }));
                 // print("${widget.title} Result ===> $result");
                 // print("${widget.title} Result Type ===> ${result.runtimeType}");
-                if (result.runtimeType == List<String>) {
-                  widget.fatherWidgetState.refreshCard(widget, result);
-                  setState(() {});
-                }
+
+                widget.fatherWidgetState.refreshCard(widget, widget.wordList.addAll(CustomCache.waitForAdd));
+                CustomCache.cleaner();
+                setState(() {});
+
               },
               onLongPress: () {
                 setState(() {
@@ -247,6 +249,7 @@ class _ListenEntranceState extends State<ListenEntrance> {
     final SharedPreferencesWithCache prefs = await _prefs;
     prefs.setStringList("listenningGroup", _listenCardList);
   }
+
 
   Future<void> refreshCard(
       ListenningCard deletingCard, List<dynamic> newList) async {

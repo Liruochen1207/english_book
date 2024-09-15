@@ -4,6 +4,7 @@ import 'package:english_book/page/playing.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../cache.dart';
 import 'listen.dart';
 
 class CollectPage extends StatefulWidget {
@@ -32,6 +33,7 @@ class _CollectPageState extends State<CollectPage> {
       String tit = de.keys.first;
       if (tit == title) {
         de.values.first.add(widget.word);
+        CustomCache.waitForAdd.add(widget.word);
         waitRef = value;
         newList = TitleTransformer.encode(tit, de.values.first);
       }

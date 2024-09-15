@@ -7,10 +7,13 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../cache.dart';
+import 'listen.dart';
+
 class WordCard extends StatefulWidget {
   String word;
   var fatherWidgetState;
-  void Function() refresh = (){};
+  void Function() refresh = () {};
   WordCard({super.key, required this.word, required this.fatherWidgetState});
 
   Future<List<List<dynamic>>> showWord() async {
@@ -42,32 +45,27 @@ class _WordCardState extends State<WordCard> {
 
   void assertOverflowing() {
     setState(() {
-      _isOverflowing =
-          controller.position.maxScrollExtent > 0 && (! (controller.offset == controller.position.maxScrollExtent));
+      _isOverflowing = controller.position.maxScrollExtent > 0 &&
+          (!(controller.offset == controller.position.maxScrollExtent));
     });
   }
-
 
   @override
   void initState() {
     super.initState();
-    widget.refresh = (){
+    widget.refresh = () {
       assertOverflowing();
     };
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
       assertOverflowing();
     });
-
   }
-
 
   @override
   void dispose() {
     _isOverflowing = false;
-    setState(() {
-
-    });
+    setState(() {});
     super.dispose();
   }
 
@@ -92,9 +90,8 @@ class _WordCardState extends State<WordCard> {
                     return MyHomePage(
                         isDarkness: isDarkness, wordList: widget.showWord);
                   })).then((onValue) {
-                    while (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
+                    widget.fatherWidgetState.initWordList();
+                    setState(() {});
                   });
                 },
                 onLongPress: cancelOptions,
@@ -107,7 +104,8 @@ class _WordCardState extends State<WordCard> {
                         child: Row(
                           children: [
                             Container(
-                              width: MediaQuery.of(context).size.width * 5.5 / 10,
+                              width:
+                                  MediaQuery.of(context).size.width * 5.5 / 10,
                               child: SingleChildScrollView(
                                 controller: controller
                                   ..addListener(() {
@@ -126,16 +124,18 @@ class _WordCardState extends State<WordCard> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 5,),
+                            const SizedBox(
+                              width: 5,
+                            ),
                             _isOverflowing
                                 ? Container(
-                              child: Text(
-                                '...',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            )
+                                    child: Text(
+                                      '...',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                  )
                                 : const SizedBox(),
                           ],
                         ),
@@ -188,9 +188,10 @@ class _WordCardState extends State<WordCard> {
 }
 
 class Playing extends StatefulWidget {
-  List<dynamic> wordList;
   Playing({super.key, required this.title, required this.wordList});
   String title;
+  dynamic wordList;
+
   @override
   State<StatefulWidget> createState() {
     // TODO: implement createState
@@ -202,6 +203,7 @@ class _PlayingState extends State<Playing> {
   bool isDisable = false;
   bool _showDialog = false;
   List<Widget> _scollingList = [];
+  List<String> _listenCardList = [];
   String inputing = "";
   TextEditingController controller = TextEditingController();
   Timer? timer;
@@ -210,28 +212,33 @@ class _PlayingState extends State<Playing> {
   @override
   void dispose() {
     timer?.cancel();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    Set<String> allowList = <String>{widget.title};
+    // Set<String> allowList = <String>{widget.title};
+    initWordList();
+  }
+
+  Future<void> initWordList() async {
+    _scollingList = [];
+    widget.wordList.addAll(CustomCache.waitForAdd);
+    CustomCache.cleaner();
     widget.wordList.forEach((value) {
       _scollingList.add(WordCard(
         word: value.toString(),
         fatherWidgetState: this,
       ));
+      setState(() {});
     });
-
   }
-
-
 
   void refreshState() {
     setState(() {});
   }
-
 
   void delWordCard(WordCard delCard) {
     setState(() {
@@ -240,32 +247,32 @@ class _PlayingState extends State<Playing> {
   }
 
   void submitWord() {
-    setState(() {
-      WordCard card = WordCard(
-        word: inputing,
-        fatherWidgetState: this,
-      );
-      _scollingList.add(card);
-      inputing = "";
-      controller.text = "";
-    });
+    WordCard card = WordCard(
+      word: inputing,
+      fatherWidgetState: this,
+    );
+    CustomCache.waitForAdd.add(inputing);
+    _scollingList.add(card);
+    inputing = "";
+    controller.text = "";
+    setState(() {});
   }
 
   Future<bool> _onWillPop() async {
-    List<String> words = [];
-    for (var i = 0; i < _scollingList.length; i++) {
-      words.add((_scollingList[i] as WordCard).word);
-    }
-    Navigator.pop(context, words);
-    return false;
+    // List<String> words = [];
+    // for (var i = 0; i < _scollingList.length; i++) {
+    //   words.add((_scollingList[i] as WordCard).word);
+    // }
+    // Navigator.pop(context, words);
+    // return false;
+
+    return true;
   }
 
   Widget dialogManager(Widget child) {
     return _showDialog ? child : const SizedBox();
   }
 
-  
-  
   @override
   Widget build(BuildContext context) {
     bool isDarkness =
