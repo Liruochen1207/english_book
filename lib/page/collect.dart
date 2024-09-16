@@ -38,14 +38,13 @@ class _CollectPageState extends State<CollectPage> {
         newList = TitleTransformer.encode(tit, de.values.first);
       }
     });
-    if (waitRef != null && newList != null){
+    if (waitRef != null && newList != null) {
       _listenCardList.remove(waitRef);
       _listenCardList.add(newList!);
     }
     final SharedPreferencesWithCache prefs = await _group_prefs;
     prefs.setStringList("listenningGroup", _listenCardList);
   }
-
 
   Future<void> getListeningList() async {
     await _group_prefs.then((SharedPreferencesWithCache prefs) {
@@ -73,7 +72,8 @@ class _CollectPageState extends State<CollectPage> {
     String title = DateTime.now().toString();
     _sectionCardList.add(SectionCard(
       title: title,
-      fatherWidgetState: this, li: [],
+      fatherWidgetState: this,
+      li: [],
     ));
     _listenCardList.add(TitleTransformer.encode(title, []));
     final SharedPreferencesWithCache prefs = await _group_prefs;
@@ -89,7 +89,9 @@ class _CollectPageState extends State<CollectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("点击一个存入"),),
+      appBar: AppBar(
+        title: Text("点击一个存入"),
+      ),
       body: SingleChildScrollView(
         child: Column(
           verticalDirection: VerticalDirection.up,
@@ -116,15 +118,18 @@ class SectionCard extends StatefulWidget {
   final List<dynamic> li;
   dynamic fatherWidgetState;
 
-  SectionCard({super.key, required this.title, required this.li, required this.fatherWidgetState});
+  SectionCard(
+      {super.key,
+      required this.title,
+      required this.li,
+      required this.fatherWidgetState});
 
   @override
   State<SectionCard> createState() => _SectionCardState();
 }
 
 class _SectionCardState extends State<SectionCard> {
-
-  Future<void> safetyQuit() async{
+  Future<void> safetyQuit() async {
     await widget.fatherWidgetState.refreshListeningList(widget.title);
     Navigator.pop(context);
   }
@@ -133,22 +138,21 @@ class _SectionCardState extends State<SectionCard> {
   Widget build(BuildContext context) {
     return Center(
       child: InkWell(
-        onTap: (){
-          safetyQuit();
-        },
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(15),
-              child: Text(
-                widget.title,
-                style: TextStyle(fontSize: 12),
+          onTap: () {
+            safetyQuit();
+          },
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(15),
+                child: Text(
+                  widget.title,
+                  style: TextStyle(fontSize: 12),
+                ),
               ),
-            ),
-            Divider(),
-          ],
-        )
-      ),
+              Divider(),
+            ],
+          )),
     );
   }
 }

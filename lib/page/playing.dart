@@ -310,8 +310,8 @@ class _PlayingState extends State<Playing> {
       word: inputing,
       fatherWidgetState: this,
     );
-    CustomCache.waitForAdd.add(inputing);
-    CustomCache.cleaner();
+    // CustomCache.waitForAdd.add(inputing);
+    // CustomCache.cleaner();
     refreshListeningList(widget.title, inputing).then((_) {
       _scollingList.add(card);
       inputing = "";

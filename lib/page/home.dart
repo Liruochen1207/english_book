@@ -21,6 +21,8 @@ import 'package:flutter/services.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../cache.dart';
+
 class MyHomePage extends StatefulWidget {
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -68,7 +70,6 @@ class _MyHomePageState extends State<MyHomePage> {
           cacheOptions: const SharedPreferencesWithCacheOptions(
               // This cache will only accept the key 'counter'.
               allowList: <String>{'wordIndex'}));
-
 
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
@@ -140,7 +141,6 @@ class _MyHomePageState extends State<MyHomePage> {
       if (!Platform.isAndroid) {
         isOverflowing = wordScrollController.position.maxScrollExtent > 0;
       }
-
     } catch (e) {}
     return Scaffold(
       appBar: AppBar(
@@ -200,7 +200,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             '$_word',
-                            style: TextStyle(fontSize: Platform.isAndroid ? 32 : 35),
+                            style: TextStyle(
+                                fontSize: Platform.isAndroid ? 32 : 35),
                           ),
                         ),
                       ),
@@ -237,15 +238,22 @@ class _MyHomePageState extends State<MyHomePage> {
                         )),
                     IconButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) {
-                            return CollectPage(word: _word,);
-                          }));
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return CollectPage(
+                              word: _word,
+                            );
+                          })).then((onValue) {
+                            if (!Navigator.canPop(context)) {
+                              CustomCache.cleaner();
+                            }
+                          });
                         },
                         icon: Icon(
-                              Icons.star_border,
-                              size: 26,
+                          Icons.star_border,
+                          size: 26,
                           color: Colors.amber,
-                            )),
+                        )),
                   ],
                 ),
               ),
@@ -336,7 +344,6 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-
   Future<List<String>> explainWord(String word) async {
     List<String> ready = [];
     if (word != "") {
@@ -367,18 +374,17 @@ class _MyHomePageState extends State<MyHomePage> {
       print(widget.words);
       connectSQL();
       refreshWord();
-      
+
       setState(() {});
     });
-    if (Platform.isAndroid){
-      wordScrollController.addListener((){
-        isEndScrolling = wordScrollController.offset >= wordScrollController.position.maxScrollExtent;
-        if (!isEndScrolling){
+    if (Platform.isAndroid) {
+      wordScrollController.addListener(() {
+        isEndScrolling = wordScrollController.offset >=
+            wordScrollController.position.maxScrollExtent;
+        if (!isEndScrolling) {
           isOverflowing = true;
         }
-        setState(() {
-
-        });
+        setState(() {});
         print(isEndScrolling);
       });
     }
@@ -481,9 +487,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       _delta = 0;
     });
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   String pickWord(int index) {
@@ -556,7 +560,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
 
         updateData();
-        if (Platform.isAndroid){
+        if (Platform.isAndroid) {
           isOverflowing = wordScrollController.position.maxScrollExtent > 0;
           isEndScrolling = false;
         }
