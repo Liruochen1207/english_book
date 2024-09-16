@@ -209,6 +209,12 @@ class _PlayingState extends State<Playing> {
   Timer? timer;
   int index = 0;
 
+  final Future<SharedPreferencesWithCache> _group_prefs =
+      SharedPreferencesWithCache.create(
+          cacheOptions: const SharedPreferencesWithCacheOptions(
+              // This cache will only accept the key 'counter'.
+              allowList: <String>{'listenningGroup'}));
+
   @override
   void dispose() {
     timer?.cancel();
@@ -223,16 +229,48 @@ class _PlayingState extends State<Playing> {
     initWordList();
   }
 
+  Future<void> refreshListeningList(String title, String word) async {
+    await _group_prefs.then((SharedPreferencesWithCache prefss) {
+      String? waitRef;
+      String? newList;
+      var _rlistenCardList = prefss.getStringList("listenningGroup") ?? [];
+      _rlistenCardList.forEach((value) {
+        Map<String, dynamic> de = TitleTransformer.decode(value);
+        String tit = de.keys.first;
+        if (tit == title) {
+          de.values.first.add(word);
+          waitRef = value;
+          newList = TitleTransformer.encode(tit, de.values.first);
+        }
+      });
+      if (waitRef != null && newList != null) {
+        _rlistenCardList.remove(waitRef);
+        _rlistenCardList.add(newList!);
+      }
+      prefss.setStringList("listenningGroup", _rlistenCardList);
+    });
+  }
+
   Future<void> initWordList() async {
     _scollingList = [];
-    widget.wordList.addAll(CustomCache.waitForAdd);
-    CustomCache.cleaner();
-    widget.wordList.forEach((value) {
-      _scollingList.add(WordCard(
-        word: value.toString(),
-        fatherWidgetState: this,
-      ));
-      setState(() {});
+
+    await _group_prefs.then((SharedPreferencesWithCache prefss) {
+      var _rlistenCardList = prefss.getStringList("listenningGroup") ?? [];
+      _rlistenCardList.forEach((value) {
+        Map<String, dynamic> de = TitleTransformer.decode(value);
+        String tit = de.keys.first;
+        if (tit == widget.title) {
+          de.values.first.addAll(CustomCache.waitForAdd);
+          CustomCache.cleaner();
+          de.values.first.forEach((value) {
+            _scollingList.add(WordCard(
+              word: value.toString(),
+              fatherWidgetState: this,
+            ));
+            setState(() {});
+          });
+        }
+      });
     });
   }
 
@@ -240,9 +278,30 @@ class _PlayingState extends State<Playing> {
     setState(() {});
   }
 
-  void delWordCard(WordCard delCard) {
-    setState(() {
-      _scollingList.remove(delCard);
+  Future<void> delWordCard(WordCard delCard) async {
+    await _group_prefs.then((SharedPreferencesWithCache prefss) {
+      String? waitRef;
+      String? newList;
+      var wordIndex = _scollingList.indexOf(delCard);
+      var _rlistenCardList = prefss.getStringList("listenningGroup") ?? [];
+      _rlistenCardList.forEach((value) {
+        Map<String, dynamic> de = TitleTransformer.decode(value);
+        String tit = de.keys.first;
+        if (tit == widget.title) {
+          de.values.first.removeAt(wordIndex);
+          CustomCache.waitForAdd.remove(delCard.word);
+          waitRef = value;
+          newList = TitleTransformer.encode(tit, de.values.first);
+        }
+      });
+      if (waitRef != null && newList != null) {
+        _rlistenCardList.remove(waitRef);
+        _rlistenCardList.add(newList!);
+      }
+      prefss.setStringList("listenningGroup", _rlistenCardList);
+      setState(() {
+        _scollingList.remove(delCard);
+      });
     });
   }
 
@@ -252,10 +311,13 @@ class _PlayingState extends State<Playing> {
       fatherWidgetState: this,
     );
     CustomCache.waitForAdd.add(inputing);
-    _scollingList.add(card);
-    inputing = "";
-    controller.text = "";
-    setState(() {});
+    CustomCache.cleaner();
+    refreshListeningList(widget.title, inputing).then((_) {
+      _scollingList.add(card);
+      inputing = "";
+      controller.text = "";
+      setState(() {});
+    });
   }
 
   Future<bool> _onWillPop() async {

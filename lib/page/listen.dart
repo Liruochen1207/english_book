@@ -56,9 +56,12 @@ class _ListenningCardState extends State<ListenningCard> {
     await widget.fatherWidgetState.delCard(widget);
     widget.title = widget.cache;
     await widget.fatherWidgetState._listenningGroup.add(widget);
-    await widget.fatherWidgetState._listenCardList.add(TitleTransformer.encode(widget.title, widget.wordList));
-    final SharedPreferencesWithCache prefs = await widget.fatherWidgetState._prefs;
-    prefs.setStringList("listenningGroup", widget.fatherWidgetState._listenCardList);
+    await widget.fatherWidgetState._listenCardList
+        .add(TitleTransformer.encode(widget.title, widget.wordList));
+    final SharedPreferencesWithCache prefs =
+        await widget.fatherWidgetState._prefs;
+    prefs.setStringList(
+        "listenningGroup", widget.fatherWidgetState._listenCardList);
     _isEditing = false;
     _isShowingPanel = false;
   }
@@ -77,16 +80,17 @@ class _ListenningCardState extends State<ListenningCard> {
                 var result = await Navigator.push(context,
                     MaterialPageRoute(builder: (context) {
                   return Playing(
-                    title: widget.title, wordList: widget.wordList,
+                    title: widget.title,
+                    wordList: widget.wordList,
                   );
                 }));
                 // print("${widget.title} Result ===> $result");
                 // print("${widget.title} Result Type ===> ${result.runtimeType}");
 
-                widget.fatherWidgetState.refreshCard(widget, widget.wordList.addAll(CustomCache.waitForAdd));
+                widget.fatherWidgetState.refreshCard(widget,
+                    widget.wordList.addAll(CustomCache.waitForAdd ?? []));
                 CustomCache.cleaner();
                 setState(() {});
-
               },
               onLongPress: () {
                 setState(() {
@@ -175,44 +179,42 @@ class _ListenningCardState extends State<ListenningCard> {
             ),
           ),
           Visibility(
-            visible: _isEditing,
+              visible: _isEditing,
               child: Container(
-            color: Theme.of(context).scaffoldBackgroundColor,
-          )),
+                color: Theme.of(context).scaffoldBackgroundColor,
+              )),
           Visibility(
-            visible: _isEditing,
+              visible: _isEditing,
               child: Row(
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width * 8 / 10,
-                child: TextField(
-                  onChanged: (value){
-                    widget.cache = value;
-                  },
-                  controller: _rename_controller,
-                ),
-              ),
-              Container(
-                width: MediaQuery.of(context).size.width * 2 / 10,
-                child: InkWell(
-                  child: Container(
-                    width: 100,
-                    height: 70,
-                    alignment: Alignment.center,
-                    color: Colors.blue,
-                    child: Text("保存"),
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width * 8 / 10,
+                    child: TextField(
+                      onChanged: (value) {
+                        widget.cache = value;
+                      },
+                      controller: _rename_controller,
+                    ),
                   ),
-                  onTap: () {
-                      rename().then((onValue){
-                        setState(() {
-
+                  Container(
+                    width: MediaQuery.of(context).size.width * 2 / 10,
+                    child: InkWell(
+                      child: Container(
+                        width: 100,
+                        height: 70,
+                        alignment: Alignment.center,
+                        color: Colors.blue,
+                        child: Text("保存"),
+                      ),
+                      onTap: () {
+                        rename().then((onValue) {
+                          setState(() {});
                         });
-                      });
-                  },
-                ),
-              ),
-            ],
-          )),
+                      },
+                    ),
+                  ),
+                ],
+              )),
         ],
       ),
     );
@@ -249,7 +251,6 @@ class _ListenEntranceState extends State<ListenEntrance> {
     final SharedPreferencesWithCache prefs = await _prefs;
     prefs.setStringList("listenningGroup", _listenCardList);
   }
-
 
   Future<void> refreshCard(
       ListenningCard deletingCard, List<dynamic> newList) async {
