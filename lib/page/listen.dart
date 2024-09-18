@@ -87,9 +87,11 @@ class _ListenningCardState extends State<ListenningCard> {
                 // print("${widget.title} Result ===> $result");
                 // print("${widget.title} Result Type ===> ${result.runtimeType}");
 
-                widget.fatherWidgetState.refreshCard(widget,
-                    widget.wordList.addAll(CustomCache.waitForAdd ?? []));
-                CustomCache.cleaner();
+                widget.fatherWidgetState.refreshCard(
+                    widget,
+                    widget.wordList
+                        .addAll(CustomCache.waitForAdd.get(widget.title)));
+                CustomCache.waitForAdd.clear(widget.title);
                 setState(() {});
               },
               onLongPress: () {

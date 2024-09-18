@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:english_book/http/english_chinese.dart';
 import 'package:english_book/page/home.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +20,16 @@ class _ConversationPageState extends State<ConversationPage> {
   // 这里定义一个较长的文本字符串，用于展示对话内容
   String conversationText = "";
   String text = "";
+  Stream<Uint8List>? conversationStream;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getAiExplain(this, () {
-      setState(() {});
-    });
+    getAiExplain();
+    // getAiExplain(this, () {
+    //   setState(() {});
+    // });
   }
 
   Future<List<List<dynamic>>> showWord() async {
@@ -30,6 +37,43 @@ class _ConversationPageState extends State<ConversationPage> {
     return [
       [-1, text, null, null]
     ];
+  }
+
+  Future<void> getAiExplain() async {
+    final dio = Dio();
+    String avengeSize = Platform.isWindows ? "大" : "小";
+    var data = {
+      'content': [
+        {'role': 'system', 'content': '美观的markdown格式输出'},
+        {
+          'role': 'system',
+          'content':
+              '请为${Platform.operatingSystem}设备输出平均字体大小偏$avengeSize的严格markdown格式文本'
+        },
+        {'role': 'system', 'content': '每一个你给的英文句子需要翻译成中文写在它下面'},
+        {'role': 'system', 'content': '你需要为用户提供同义替换词、单词造句、语境说明、英英牛津该词原文'},
+        {'role': 'user', 'content': widget.word}
+      ]
+    };
+    try {
+      Response<ResponseBody> response = await dio.post(
+          'http://47.108.91.180:5000/stream',
+          data: data,
+          options: Options(responseType: ResponseType.stream));
+      conversationStream = response.data?.stream;
+      conversationStream?.listen((data) {
+        String received = utf8.decode(data);
+        print(received);
+        conversationText += received;
+        setState(() {});
+      }, onError: (error) {
+        print("Stream error $error");
+      }, onDone: () {
+        print("Stream close");
+      });
+    } catch (e) {
+      print(e);
+    }
   }
 
   String extractSubstring(String str, int start, int end) {

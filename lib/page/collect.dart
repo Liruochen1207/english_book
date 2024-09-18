@@ -33,7 +33,7 @@ class _CollectPageState extends State<CollectPage> {
       String tit = de.keys.first;
       if (tit == title) {
         de.values.first.add(widget.word);
-        CustomCache.waitForAdd.add(widget.word);
+        CustomCache.waitForAdd.add(title, widget.word);
         waitRef = value;
         newList = TitleTransformer.encode(tit, de.values.first);
       }

@@ -142,6 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
         isOverflowing = wordScrollController.position.maxScrollExtent > 0;
       }
     } catch (e) {}
+    bool isLongWord = _word.contains(" ") || _word.length > 10;
     return Scaffold(
       appBar: AppBar(
         backgroundColor:
@@ -188,86 +189,151 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(30),
-                child: Row(
-                  children: [
-                    GestureDetector(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                      onPressed: () {
+                        speechWord(2);
+                      },
+                      icon: Icon(
+                        Icons.volume_up,
+                        size: 26,
+                      )),
+                  IconButton(
+                      onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return CollectPage(
+                            word: _word,
+                          );
+                        })).then((onValue) {
+                          if (!Navigator.canPop(context)) {
+                            CustomCache.waitForAdd.clearAll();
+                          }
+                        });
+                      },
+                      icon: Icon(
+                        Icons.star_border,
+                        size: 26,
+                        color: Colors.amber,
+                      )),
+                ],
+              ),
+              Divider(),
+              isLongWord
+                  ? const SizedBox()
+                  : Padding(
+                      padding: EdgeInsets.only(left: 24),
+                      child: Text(
+                        '$_word',
+                        style:
+                            TextStyle(fontSize: Platform.isAndroid ? 32 : 35),
+                      ),
+                    ),
+              isLongWord
+                  ? const SizedBox()
+                  : const IgnorePointer(
+                      child: SizedBox(
+                        height: 100,
+                      ),
+                    ),
+              // Padding(
+              //     padding: EdgeInsets.only(left: 30),
+              //     child: Row(
+              //       children: [
+              //         GestureDetector(
+              //           child: Container(
+              //             width: screenWidth / 1.37,
+              //             child: SingleChildScrollView(
+              //               controller: wordScrollController,
+              //               scrollDirection: Axis.horizontal,
+              //               child: Text(
+              //                 '$_word',
+              //                 style: TextStyle(
+              //                     fontSize: Platform.isAndroid ? 32 : 35),
+              //               ),
+              //             ),
+              //           ),
+              //           onHorizontalDragUpdate: (value) {
+              //             if (!Platform.isAndroid) {
+              //               double maxPos = wordScrollController
+              //                   .position.maxScrollExtent;
+              //               double lastPos = wordScrollController.offset;
+              //               wordScrollController
+              //                   .jumpTo(lastPos -= value.delta.dx);
+              //               double nowPos = wordScrollController.offset;
+              //               isEndScrolling = nowPos >= maxPos;
+              //               print(nowPos);
+              //               setState(() {});
+              //             }
+              //           },
+              //         ),
+              //         (isOverflowing && (!isEndScrolling))
+              //             ? Transform.translate(
+              //                 offset: Offset(4, 0),
+              //                 child: Text(
+              //                   '...',
+              //                   style: TextStyle(fontSize: 35),
+              //                 ),
+              //               )
+              //             : const SizedBox(),
+              //       ],
+              //     ),
+              //   ),
+              isLongWord
+                  ? Padding(
+                      padding: EdgeInsets.only(left: 24, right: 30, bottom: 20),
                       child: Container(
-                        width: screenWidth / 2,
-                        child: SingleChildScrollView(
-                          controller: wordScrollController,
-                          scrollDirection: Axis.horizontal,
-                          child: Text(
-                            '$_word',
-                            style: TextStyle(
-                                fontSize: Platform.isAndroid ? 32 : 35),
+                        alignment: Alignment.center,
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 16),
+                              child: Text(
+                                '$_word',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 20),
+                              ),
+                            ),
                           ),
                         ),
+                        height: 200,
                       ),
-                      onHorizontalDragUpdate: (value) {
-                        if (!Platform.isAndroid) {
-                          double maxPos =
-                              wordScrollController.position.maxScrollExtent;
-                          double lastPos = wordScrollController.offset;
-                          wordScrollController
-                              .jumpTo(lastPos -= value.delta.dx);
-                          double nowPos = wordScrollController.offset;
-                          isEndScrolling = nowPos >= maxPos;
-                          print(nowPos);
-                          setState(() {});
-                        }
-                      },
-                    ),
-                    (isOverflowing && (!isEndScrolling))
-                        ? Transform.translate(
-                            offset: Offset(4, 0),
-                            child: Text(
-                              '...',
-                              style: TextStyle(fontSize: 35),
-                            ),
-                          )
-                        : const SizedBox(),
-                    IconButton(
-                        onPressed: () {
-                          speechWord(2);
-                        },
-                        icon: Icon(
-                          Icons.volume_up,
-                          size: 26,
-                        )),
-                    IconButton(
-                        onPressed: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return CollectPage(
-                              word: _word,
-                            );
-                          })).then((onValue) {
-                            if (!Navigator.canPop(context)) {
-                              CustomCache.cleaner();
-                            }
-                          });
-                        },
-                        icon: Icon(
-                          Icons.star_border,
-                          size: 26,
-                          color: Colors.amber,
-                        )),
-                  ],
-                ),
-              ),
+                    )
+                  : const SizedBox(),
+
+              isLongWord
+                  ? const IgnorePointer(
+                      child: Divider(),
+                    )
+                  : const SizedBox(),
+              isLongWord
+                  ? const IgnorePointer(
+                      child: SizedBox(
+                        height: 20,
+                      ),
+                    )
+                  : const SizedBox(),
               IgnorePointer(
                 child: Padding(
-                  padding: EdgeInsets.all(30),
+                  padding: EdgeInsets.only(left: 30, right: 30),
                   child: Text(
                     '$_explain',
                   ),
                 ),
               ),
+              isLongWord
+                  ? const SizedBox()
+                  : const IgnorePointer(
+                      child: SizedBox(
+                        height: 40,
+                      ),
+                    ),
               IgnorePointer(
                 child: Padding(
-                  padding: EdgeInsets.all(30),
+                  padding: EdgeInsets.only(left: 30, right: 30),
                   child: Text(
                     '$_other',
                   ),
@@ -352,6 +418,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (ready.isEmpty) {
       ready = [await translateLanguage(word)];
     }
+    setState(() {});
     return ready;
   }
 

@@ -90,8 +90,10 @@ class _WordCardState extends State<WordCard> {
                     return MyHomePage(
                         isDarkness: isDarkness, wordList: widget.showWord);
                   })).then((onValue) {
-                    widget.fatherWidgetState.initWordList();
-                    setState(() {});
+                    if (CustomCache.waitForAdd.hasCached()) {
+                      widget.fatherWidgetState.initWordList();
+                      setState(() {});
+                    }
                   });
                 },
                 onLongPress: cancelOptions,
@@ -253,21 +255,27 @@ class _PlayingState extends State<Playing> {
 
   Future<void> initWordList() async {
     _scollingList = [];
-
+    int milliseconds = 200;
     await _group_prefs.then((SharedPreferencesWithCache prefss) {
       var _rlistenCardList = prefss.getStringList("listenningGroup") ?? [];
       _rlistenCardList.forEach((value) {
         Map<String, dynamic> de = TitleTransformer.decode(value);
         String tit = de.keys.first;
         if (tit == widget.title) {
-          de.values.first.addAll(CustomCache.waitForAdd);
-          CustomCache.cleaner();
+          de.values.first.addAll(CustomCache.waitForAdd.get(tit));
+          CustomCache.waitForAdd.clear(widget.title);
+
+          // milliseconds = de.values.first.length * 5;
           de.values.first.forEach((value) {
-            _scollingList.add(WordCard(
-              word: value.toString(),
-              fatherWidgetState: this,
-            ));
-            setState(() {});
+            var dispos = 3;
+            milliseconds + dispos >= 0 ? milliseconds += dispos : null;
+            Future.delayed(Duration(milliseconds: milliseconds), () {
+              _scollingList.add(WordCard(
+                word: value.toString(),
+                fatherWidgetState: this,
+              ));
+              setState(() {});
+            });
           });
         }
       });
@@ -289,7 +297,7 @@ class _PlayingState extends State<Playing> {
         String tit = de.keys.first;
         if (tit == widget.title) {
           de.values.first.removeAt(wordIndex);
-          CustomCache.waitForAdd.remove(delCard.word);
+          CustomCache.waitForAdd.remove(tit, delCard.word);
           waitRef = value;
           newList = TitleTransformer.encode(tit, de.values.first);
         }
@@ -310,8 +318,8 @@ class _PlayingState extends State<Playing> {
       word: inputing,
       fatherWidgetState: this,
     );
-    // CustomCache.waitForAdd.add(inputing);
-    // CustomCache.cleaner();
+    // CustomCache.waitForAdd.add(widget.title, inputing);
+    // CustomCache.waitForAdd.clearAll();
     refreshListeningList(widget.title, inputing).then((_) {
       _scollingList.add(card);
       inputing = "";
