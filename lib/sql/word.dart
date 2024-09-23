@@ -15,9 +15,9 @@ Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
       var result = await connection.execute(
           "UPDATE word_table0$tableIndex SET mean='$mean' WHERE word='$word'");
       print("注入结果：");
-      for (final row in result.rows) {
-        print(row.colAt(0));
-      }
+      // for (final row in result.rows) {
+      //   print(row.colAt(0));
+      // }
     }
   }
 }
@@ -33,9 +33,9 @@ Future<void> submitOthers(MySQLConnection? connection, int tableIndex,
       var result = await connection.execute(
           "UPDATE word_table0$tableIndex SET other='$other' WHERE word='$word'");
       print("注入结果：");
-      for (final row in result.rows) {
-        print(row.colAt(0));
-      }
+      // for (final row in result.rows) {
+      //   print(row.colAt(0));
+      // }
     }
   }
 }

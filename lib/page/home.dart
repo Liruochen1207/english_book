@@ -48,8 +48,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int _wordIndex = 0;
   int _delta = 0;
+  final int _speechType = 2;
   List<String> _searchResult = [];
   var _word = "";
+  var _phonetic = "";
   var _explain = "";
   var _other = "";
   Uint8List? _voice;
@@ -60,6 +62,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isOverflowing = false;
   bool isEndScrolling = false;
   double textProportion = 15.6;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
@@ -119,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
             case 'exam':
               FocusScope.of(context).requestFocus(backgroundFocus);
               print("SPEECH");
-              speechWord(2);
+              speechWord(_speechType);
               break;
           }
         }
@@ -144,6 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (e) {}
     bool isLongWord = _word.contains(" ") || _word.length > 10;
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor:
             widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
@@ -158,11 +163,49 @@ class _MyHomePageState extends State<MyHomePage> {
                 icon: Icon(Icons.headphones)),
         actions: [
           IconButton(
+            icon: Icon(Icons.menu),
+            onPressed: () {
+              _scaffoldKey.currentState!.openDrawer();
+              setState(() {});
+            },
+          ),
+          IconButton(
               onPressed: () {
                 randomWord();
               },
               icon: Icon(Icons.sync)),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Text('Drawer Header'),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Item 1'),
+              onTap: () {
+                // Update the state of the app
+                // ...
+                // Then close the drawer
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Item 2'),
+              onTap: () {
+                // Update the state of the app
+                // ...
+                // Then close the drawer
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
       body: Stack(
         children: [
@@ -186,41 +229,9 @@ class _MyHomePageState extends State<MyHomePage> {
             // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
             // action in the IDE, or press "p" in the console), to see the
             // wireframe for each widget.
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                      onPressed: () {
-                        speechWord(2);
-                      },
-                      icon: Icon(
-                        Icons.volume_up,
-                        size: 26,
-                      )),
-                  IconButton(
-                      onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                          return CollectPage(
-                            word: _word,
-                          );
-                        })).then((onValue) {
-                          if (!Navigator.canPop(context)) {
-                            CustomCache.waitForAdd.clearAll();
-                          }
-                        });
-                      },
-                      icon: Icon(
-                        Icons.star_border,
-                        size: 26,
-                        color: Colors.amber,
-                      )),
-                ],
-              ),
-              Divider(),
               isLongWord
                   ? const SizedBox()
                   : Padding(
@@ -231,13 +242,14 @@ class _MyHomePageState extends State<MyHomePage> {
                             TextStyle(fontSize: Platform.isAndroid ? 32 : 35),
                       ),
                     ),
-              isLongWord
-                  ? const SizedBox()
-                  : const IgnorePointer(
-                      child: SizedBox(
-                        height: 100,
-                      ),
-                    ),
+
+              IgnorePointer(
+                child: Padding(
+                  padding: EdgeInsets.only(left: 30),
+                  child: Text(_phonetic),
+                ),
+              ),
+
               // Padding(
               //     padding: EdgeInsets.only(left: 30),
               //     child: Row(
@@ -324,13 +336,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
-              isLongWord
-                  ? const SizedBox()
-                  : const IgnorePointer(
-                      child: SizedBox(
-                        height: 40,
-                      ),
-                    ),
+
               IgnorePointer(
                 child: Padding(
                   padding: EdgeInsets.only(left: 30, right: 30),
@@ -341,35 +347,93 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           ), // This trailing comma makes auto-formatting nicer for build methods.
-
           Positioned(
-              bottom: 40,
-              right: 40,
-              child: FloatingActionButton(
-                child: Icon(Icons.library_books),
-                onPressed: () {
-                  gatePortal();
-                },
-              )),
-          Positioned(
-              bottom: 40,
-              right: 120,
-              child: FloatingActionButton(
-                child: const Center(
-                  child: Text(
-                    "AI",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                  ),
+            width: screenWidth / 1.2,
+            left: screenWidth / 8,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                FloatingActionButton(
+                    onPressed: () {
+                      speechWord(_speechType);
+                    },
+                    child: Icon(
+                      Icons.volume_up,
+                      size: 26,
+                    )),
+                FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return CollectPage(
+                          word: _word,
+                        );
+                      })).then((onValue) {
+                        if (!Navigator.canPop(context)) {
+                          CustomCache.waitForAdd.clearAll();
+                        }
+                      });
+                    },
+                    child: Icon(
+                      Icons.star_border,
+                      size: 26,
+                      color: Colors.amber,
+                    )),
+                FloatingActionButton(
+                  child: Icon(Icons.library_books),
+                  onPressed: () {
+                    gatePortal();
+                  },
                 ),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return ConversationPage(
-                      isDarkness: widget.isDarkness,
-                      word: _word,
-                    );
-                  }));
-                },
-              )),
+                FloatingActionButton(
+                  child: const Center(
+                    child: Text(
+                      "AI",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return ConversationPage(
+                        isDarkness: widget.isDarkness,
+                        word: _word,
+                      );
+                    }));
+                  },
+                ),
+              ],
+            ),
+          ),
+          // Positioned(
+          //     bottom: 40,
+          //     right: 40,
+          //     child: FloatingActionButton(
+          //       child: Icon(Icons.library_books),
+          //       onPressed: () {
+          //         gatePortal();
+          //       },
+          //     )),
+          // Positioned(
+          //     bottom: 40,
+          //     right: 120,
+          //     child: FloatingActionButton(
+          //       child: const Center(
+          //         child: Text(
+          //           "AI",
+          //           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+          //         ),
+          //       ),
+          //       onPressed: () {
+          //         Navigator.push(context, MaterialPageRoute(builder: (context) {
+          //           return ConversationPage(
+          //             isDarkness: widget.isDarkness,
+          //             word: _word,
+          //           );
+          //         }));
+          //       },
+          //     )),
         ],
       ),
     );
@@ -438,7 +502,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     widget.wordList().then((onValue) {
       widget.words = onValue;
-      print(widget.words);
+      // print(widget.words);
       connectSQL();
       refreshWord();
 
@@ -502,7 +566,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ..setOnlyKeyUpAlive()
       ..setHandler(() {
         print("SPEECH");
-        speechWord(2);
+        speechWord(_speechType);
       }));
 
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.enter)
@@ -548,7 +612,7 @@ class _MyHomePageState extends State<MyHomePage> {
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
         } else {
-          speechWord(2);
+          speechWord(_speechType);
         }
       }
 
@@ -611,6 +675,11 @@ class _MyHomePageState extends State<MyHomePage> {
     print("需要刷新当前单词的时间 => ${DateTime.now()}");
     _word = pickWord(_wordIndex);
     // voiceManage(doPlaying: false);
+
+    getEnglishWordPhonetic(_word).then((onValue) {
+      _phonetic = onValue;
+      setState(() {});
+    });
 
     // _word = "curve";
     if (_explain == '' || _other == '') {

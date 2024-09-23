@@ -42,6 +42,24 @@ Future<String> translateLanguage(String sentence) async {
   return ready;
 }
 
+Future<String> getEnglishWordPhonetic(String word) async {
+  String ready = "";
+  if (!word.contains(" ")) {
+    await dioGet("https://www.youdao.com/result?word=$word&lang=en")
+        .then((onValue) {
+      var document = parse(onValue.toString());
+      document.querySelectorAll("div").forEach((element) {
+        if (element.attributes['class'].toString().contains('per-phone')) {
+          ready += element.text;
+          ready += " ";
+        }
+      });
+    });
+  }
+  // print(ready);
+  return ready;
+}
+
 Future<List<String>> englishSearch(String word) async {
   List<String> ready = [];
 
@@ -116,5 +134,5 @@ Future<Uint8List> getSpeechBytes(String word) async {
 // }
 
 Future<void> main() async {
-  var word = await getSpeechBytes('hello');
+  var word = await getEnglishWordPhonetic('hello');
 }
