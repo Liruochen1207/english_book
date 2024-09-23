@@ -319,7 +319,7 @@ class _ListenEntranceState extends State<ListenEntrance> {
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        title: Text("创建听写任务组"),
+        title: Text("收藏夹"),
         actions: [],
       ),
       body: SingleChildScrollView(

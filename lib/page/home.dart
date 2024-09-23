@@ -181,27 +181,36 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              child: Text('Drawer Header'),
+              child: Text('工具栏'),
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Theme.of(context).cardColor,
               ),
             ),
             ListTile(
-              title: Text('Item 1'),
+              title: Text('收藏夹'),
               onTap: () {
-                // Update the state of the app
-                // ...
-                // Then close the drawer
-                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return ListenEntrance();
+                }));
               },
             ),
+            Divider(),
             ListTile(
-              title: Text('Item 2'),
+              title: Text('AI解释'),
               onTap: () {
-                // Update the state of the app
-                // ...
-                // Then close the drawer
-                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return ConversationPage(
+                    isDarkness: widget.isDarkness,
+                    word: _word,
+                  );
+                }));
+              },
+            ),
+            Divider(),
+            ListTile(
+              title: Text('默写该词'),
+              onTap: () {
+                gatePortal();
               },
             ),
           ],
@@ -229,25 +238,62 @@ class _MyHomePageState extends State<MyHomePage> {
             // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
             // action in the IDE, or press "p" in the console), to see the
             // wireframe for each widget.
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              isLongWord
-                  ? const SizedBox()
-                  : Padding(
-                      padding: EdgeInsets.only(left: 24),
-                      child: Text(
-                        '$_word',
-                        style:
-                            TextStyle(fontSize: Platform.isAndroid ? 32 : 35),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  isLongWord
+                      ? const SizedBox()
+                      : Padding(
+                          padding: EdgeInsets.only(left: 0, bottom: 40),
+                          child: Center(
+                            child: Text(
+                              '$_word',
+                              style: TextStyle(
+                                  fontSize: Platform.isAndroid ? 32 : 35),
+                            ),
+                          ),
+                        ),
+                  isLongWord
+                      ? Padding(
+                          padding:
+                              EdgeInsets.only(left: 24, right: 30, bottom: 20),
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: 16),
+                                  child: Text(
+                                    '$_word',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            height: 200,
+                          ),
+                        )
+                      : const SizedBox(),
+                  isLongWord
+                      ? const IgnorePointer(
+                          child: Divider(),
+                        )
+                      : const SizedBox(),
+                  IgnorePointer(
+                    child: Padding(
+                      padding: EdgeInsets.only(),
+                      child: Center(
+                        child: Text(_phonetic),
                       ),
                     ),
-
-              IgnorePointer(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 30),
-                  child: Text(_phonetic),
-                ),
+                  ),
+                ],
               ),
 
               // Padding(
@@ -293,34 +339,7 @@ class _MyHomePageState extends State<MyHomePage> {
               //       ],
               //     ),
               //   ),
-              isLongWord
-                  ? Padding(
-                      padding: EdgeInsets.only(left: 24, right: 30, bottom: 20),
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 16),
-                              child: Text(
-                                '$_word',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 20),
-                              ),
-                            ),
-                          ),
-                        ),
-                        height: 200,
-                      ),
-                    )
-                  : const SizedBox(),
 
-              isLongWord
-                  ? const IgnorePointer(
-                      child: Divider(),
-                    )
-                  : const SizedBox(),
               isLongWord
                   ? const IgnorePointer(
                       child: SizedBox(
@@ -328,40 +347,41 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     )
                   : const SizedBox(),
-              IgnorePointer(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 30, right: 30),
-                  child: Text(
-                    '$_explain',
+              Column(
+                children: [
+                  IgnorePointer(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 30, right: 30),
+                      child: Text(
+                        '$_explain',
+                      ),
+                    ),
                   ),
-                ),
-              ),
-
-              IgnorePointer(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 30, right: 30),
-                  child: Text(
-                    '$_other',
+                  IgnorePointer(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 30, right: 30),
+                      child: Text(
+                        '$_other',
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ), // This trailing comma makes auto-formatting nicer for build methods.
           Positioned(
-            width: screenWidth / 1.2,
-            left: screenWidth / 8,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                FloatingActionButton(
+                IconButton(
                     onPressed: () {
                       speechWord(_speechType);
                     },
-                    child: Icon(
+                    icon: Icon(
                       Icons.volume_up,
                       size: 26,
                     )),
-                FloatingActionButton(
+                IconButton(
                     onPressed: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
@@ -374,35 +394,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       });
                     },
-                    child: Icon(
+                    icon: Icon(
                       Icons.star_border,
                       size: 26,
                       color: Colors.amber,
                     )),
-                FloatingActionButton(
-                  child: Icon(Icons.library_books),
-                  onPressed: () {
-                    gatePortal();
-                  },
-                ),
-                FloatingActionButton(
-                  child: const Center(
-                    child: Text(
-                      "AI",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                      return ConversationPage(
-                        isDarkness: widget.isDarkness,
-                        word: _word,
-                      );
-                    }));
-                  },
-                ),
               ],
             ),
           ),
