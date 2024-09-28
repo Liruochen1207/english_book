@@ -16,11 +16,8 @@ class WordCard extends StatefulWidget {
   void Function() refresh = () {};
   WordCard({super.key, required this.word, required this.fatherWidgetState});
 
-  Future<List<List<dynamic>>> showWord() async {
-    await Future.delayed(Duration.zero);
-    return [
-      [-1, word, null, null]
-    ];
+  List<dynamic> showWord()  {
+    return [word];
   }
 
   @override
@@ -88,7 +85,7 @@ class _WordCardState extends State<WordCard> {
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return MyHomePage(
-                        isDarkness: isDarkness, wordList: widget.showWord);
+                        isDarkness: isDarkness, wordList: widget.showWord,);
                   })).then((onValue) {
                     if (CustomCache.waitForAdd.hasCached()) {
                       widget.fatherWidgetState.initWordList();

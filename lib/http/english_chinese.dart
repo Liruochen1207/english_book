@@ -60,6 +60,8 @@ Future<String> getEnglishWordPhonetic(String word) async {
   return ready;
 }
 
+
+
 Future<List<String>> englishSearch(String word) async {
   List<String> ready = [];
 

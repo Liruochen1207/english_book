@@ -1,16 +1,11 @@
 import 'package:english_book/page/home.dart';
 import 'package:english_book/sql/client.dart';
-import 'package:english_book/sql/word.dart';
+import 'package:english_book/http/word.dart';
 import 'package:flutter/material.dart';
 
 var client = SqlClient();
 void main() {
   runApp(const MyApp());
-}
-
-Future<List<List<dynamic>>> sqlWords() async {
-  var connection = await client.connect();
-  return await getWords(connection);
 }
 
 class MyApp extends StatelessWidget {
@@ -46,8 +41,7 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
             ),
       home: MyHomePage(
-        isDarkness: isDarkness,
-        wordList: sqlWords,
+        isDarkness: isDarkness, wordList: () { return []; },
       ),
     );
   }

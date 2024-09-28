@@ -14,11 +14,11 @@ import 'package:english_book/card/interface_controlableWidget.dart';
 import 'package:english_book/card/template_card.dart';
 import 'package:english_book/note_action.dart';
 import 'package:english_book/sql/client.dart';
-import 'package:english_book/sql/word.dart';
+import 'package:english_book/http/word.dart';
 
 import 'package:english_book/http/english_chinese.dart';
 import 'package:flutter/services.dart';
-import 'package:mysql_client/mysql_client.dart';
+// import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cache.dart';
@@ -32,8 +32,8 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-  List<List<dynamic>> words = [[]];
-  Future<List<List<dynamic>>> Function() wordList;
+  List<dynamic> words = [];
+  List<dynamic> Function() wordList;
   MyHomePage({super.key, required this.isDarkness, required this.wordList});
 
   bool isDarkness;
@@ -49,15 +49,17 @@ class _MyHomePageState extends State<MyHomePage> {
   int _wordIndex = 0;
   int _delta = 0;
   final int _speechType = 2;
-  List<String> _searchResult = [];
+  // List<String> _searchResult = [];
+  List _words = [];
   var _word = "";
   var _phonetic = "";
   var _explain = "";
   var _other = "";
   Uint8List? _voice;
-  int _tableIndex = 2;
+  int _tableIndex = 0;
+  String _letters = "abcdefghijklmnopqrstuvwxyz";
   bool portalOpened = false;
-  MySQLConnection? connection;
+  // MySQLConnection? connection;
   ScrollController wordScrollController = ScrollController();
   bool isOverflowing = false;
   bool isEndScrolling = false;
@@ -73,36 +75,67 @@ class _MyHomePageState extends State<MyHomePage> {
       SharedPreferencesWithCache.create(
           cacheOptions: const SharedPreferencesWithCacheOptions(
               // This cache will only accept the key 'counter'.
-              allowList: <String>{'wordIndex'}));
+              allowList: <String>{'wordIndex' , 'tableIndex'}));
 
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
   get screenHeight => screenSize.height;
 
+  Future<void> _counterReset() async {
+    _wordIndex = 0;
+    setState(() {});
+    final SharedPreferencesWithCache prefs = await _prefs;
+    prefs.setInt('wordIndex', _wordIndex).then((_) {});
+    prefs.setInt('tableIndex', _tableIndex).then((_) {});
+  }
+
+  Future<void> _counterMax() async {
+    _wordIndex = _words.length - 1;
+    setState(() {});
+    final SharedPreferencesWithCache prefs = await _prefs;
+    prefs.setInt('wordIndex', _wordIndex).then((_) {});
+    prefs.setInt('tableIndex', _tableIndex).then((_) {});
+  }
+
   Future<void> _incrementCounter(int delta) async {
     _wordIndex = _wordIndex + delta;
     setState(() {});
     final SharedPreferencesWithCache prefs = await _prefs;
-    if (_tableIndex == -1) {
+    if (_tableIndex == -1 || _tableIndex == 26) {
       return;
     }
     prefs.setInt('wordIndex', _wordIndex).then((_) {});
+    prefs.setInt('tableIndex', _tableIndex).then((_) {});
   }
 
   void pageDown() {
-    if (_wordIndex > widget.words.length) {
-      return;
-    }
-    if (_wordIndex != 0) {
+
+    if (_wordIndex >  0) {
       _incrementCounter(-1);
       refreshWord();
+    } else {
+      if (_tableIndex - 1 >= 0){
+        _tableIndex -= 1;
+      } else {
+        _tableIndex = 25;
+      }
+      refreshTable((){_counterMax();});
     }
   }
 
   void pageUp() {
-    if (_wordIndex < (widget.words.length - 1)) {
+    if (_wordIndex < (_words.length - 1)) {
+
       _incrementCounter(1);
       refreshWord();
+    } else {
+
+      if (_tableIndex > 24){
+        _tableIndex = 0;
+      } else {
+        _tableIndex += 1;
+      }
+      refreshTable((){_counterReset();});
     }
   }
 
@@ -152,26 +185,26 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor:
             widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
-        leading: _tableIndex == -1
-            ? null
-            : IconButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return ListenEntrance();
-                  }));
-                },
-                icon: Icon(Icons.headphones)),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu),
+        leading: Navigator.canPop(context) ?
+        IconButton(
             onPressed: () {
-              _scaffoldKey.currentState!.openDrawer();
-              setState(() {});
+              Navigator.pop(context);
             },
-          ),
+            icon: Icon(Icons.arrow_back)) :
+        IconButton(
+          icon: Icon(Icons.menu),
+          onPressed: () {
+            _scaffoldKey.currentState!.openDrawer();
+            setState(() {});
+          },
+        ),
+        actions: [
+
           IconButton(
               onPressed: () {
-                randomWord();
+                // randomWord();
+                _counterReset();
+                refreshWord();
               },
               icon: Icon(Icons.sync)),
         ],
@@ -437,21 +470,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> updateData() async {
     print("尝试注入单词 $_word");
-    if (_tableIndex == -1) {
-      return;
-    }
-    var words = widget.words;
-    if (words.isNotEmpty) {
-      List args = words[_wordIndex];
-      if (args[2] == "") {
-        submitMeans(connection, _tableIndex, _word, _explain);
-      }
-      if (args[3] == "") {
-        submitOthers(connection, _tableIndex, _word, _other);
-      }
-
-      submitVoice(connection, _tableIndex, _word, _voice);
-    }
+    submitOthers( _word, _other);
   }
 
   Future<void> randomWord() async {
@@ -459,6 +478,7 @@ class _MyHomePageState extends State<MyHomePage> {
     refreshWord();
     final SharedPreferencesWithCache prefs = await _prefs;
     prefs.setInt('wordIndex', _wordIndex).then((_) {});
+    prefs.setInt('tableIndex', _tableIndex).then((_) {});
   }
 
   @override
@@ -482,12 +502,20 @@ class _MyHomePageState extends State<MyHomePage> {
     return ready;
   }
 
-  Future<void> connectSQL() async {
-    print("尝试连接");
-    connection = await client.connect();
-    print(connection);
-    // widget.words = await getWords(connection);
-    // refreshWord();
+  // Future<void> connectSQL() async {
+  //   print("尝试连接");
+  //   connection = await client.connect();
+  //   print(connection);
+  //   // widget.words = await getWords(connection);
+  //   // refreshWord();
+  // }
+  void refreshTable(void Function() d) {
+    getWords(_letters[_tableIndex]).then((words) {
+      _words = words;
+      d();
+      refreshWord();
+      setState(() {});
+    });
   }
 
   @override
@@ -496,14 +524,18 @@ class _MyHomePageState extends State<MyHomePage> {
     _prefs.then((SharedPreferencesWithCache prefs) {
       _wordIndex = prefs.getInt('wordIndex') ?? 0;
     });
-    widget.wordList().then((onValue) {
-      widget.words = onValue;
-      // print(widget.words);
-      connectSQL();
-      refreshWord();
-
-      setState(() {});
+    _prefs.then((SharedPreferencesWithCache prefs) {
+      _tableIndex = prefs.getInt('tableIndex') ?? 0;
+      refreshTable((){});
     });
+      // widget.words = widget.wordList();
+      // print(widget.words);
+      // connectSQL();
+
+
+
+
+
     if (Platform.isAndroid) {
       wordScrollController.addListener(() {
         isEndScrolling = wordScrollController.offset >=
@@ -618,89 +650,46 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String pickWord(int index) {
-    var words = widget.words;
-    if (words.length == 0) {
-      return "";
-    } else {
-      var result = [];
-      if (index > words.length) {
-        result = words.last;
-      } else {
-        result = words[index];
-      }
-
-      _tableIndex = result[0];
-      _explain = result[2] ?? '';
-      _other = result[3] ?? '';
-      // words[_counter][2] = _explain;
-      // words[_counter][3] = _other;
-
-      return result[1];
-    }
+    return _words[index];
   }
 
-  void voiceManage({required bool doPlaying}) {
-    getSQLVoice(connection, _tableIndex, _word).then((voice) {
-      // print(voice);
-      if (true || voice == null) {
-        print("需要从互联网补充音频");
-        getSpeechBytes(_word).then((onValue) {
-          _voice = onValue;
-          submitVoice(connection, _tableIndex, _word, onValue);
-          if (doPlaying) {
-            player = AudioPlayer();
-            player.setReleaseMode(ReleaseMode.stop);
-            player.setSource(BytesSource(onValue));
-            player.resume();
-          }
-        });
-      } else {
-        print("需要从数据库读取音频");
-        _voice = voice;
-        if (doPlaying) {
-          player = AudioPlayer();
-          player.setReleaseMode(ReleaseMode.stop);
-          player.setSource(BytesSource(voice));
-          player.resume();
-        }
-      }
-    });
+  Future<void> voiceManage() async {
+    if (_voice == null){
+      await getSpeechBytes(_word).then((onValue) {
+        _voice = onValue;
+      });
+    }
+    player = AudioPlayer();
+    player.setReleaseMode(ReleaseMode.stop);
+    player.setSource(BytesSource(_voice!));
+    player.resume();
+
   }
 
   void refreshWord() {
     print("需要刷新当前单词的时间 => ${DateTime.now()}");
     _word = pickWord(_wordIndex);
-    // voiceManage(doPlaying: false);
 
     getEnglishWordPhonetic(_word).then((onValue) {
       _phonetic = onValue;
       setState(() {});
     });
 
-    // _word = "curve";
-    if (_explain == '' || _other == '') {
-      print("需要搜索");
-      explainWord(_word).then((value) {
-        print("搜索结果 => $value");
-        _searchResult = value;
-        _explain = value.first;
-        _other = '';
-        for (var i = 0; i < value.length; i++) {
-          if (value[i] != value.first) {
-            _other += value[i];
-          }
+    explainWord(_word).then((value) {
+      print("搜索结果 => $value");
+      // _searchResult = value;
+      _explain = value.first;
+      _other = '';
+      for (var i = 0; i < value.length; i++) {
+        if (value[i] != value.first) {
+          _other += value[i];
         }
+      }
 
-        updateData();
-        if (Platform.isAndroid) {
-          isOverflowing = wordScrollController.position.maxScrollExtent > 0;
-          isEndScrolling = false;
-        }
-        setState(() {});
-      });
-    }
-    isOverflowing = _word.length * textProportion > screenWidth / 2;
-    isEndScrolling = false;
+      updateData();
+      setState(() {});
+    });
+
     setState(() {});
   }
 
@@ -711,7 +700,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (type > 2) {
       type = 2;
     }
-    voiceManage(doPlaying: true);
+    voiceManage();
 
     // await player.setSource(
     //     UrlSource("https://dict.youdao.com/dictvoice?audio=$_word&type=$type"));

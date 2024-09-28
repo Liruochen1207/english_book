@@ -32,11 +32,9 @@ class _ConversationPageState extends State<ConversationPage> {
     // });
   }
 
-  Future<List<List<dynamic>>> showWord() async {
-    await Future.delayed(Duration.zero);
-    return [
-      [-1, text, null, null]
-    ];
+  List<dynamic> showWord()  {
+    Future.delayed(Duration.zero);
+    return [text];
   }
 
   Future<void> getAiExplain() async {
