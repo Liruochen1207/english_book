@@ -196,7 +196,12 @@ class _MyHomePageState extends State<MyHomePage> {
         leading: Navigator.canPop(context) ?
         IconButton(
             onPressed: () {
-              Navigator.pop(context);
+              if(Navigator.canPop(context)){
+                Navigator.pop(context);
+              }
+              setState(() {
+
+              });
             },
             icon: Icon(Icons.arrow_back)) :
         IconButton(
@@ -222,7 +227,21 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              child: Text('工具栏'),
+              child: Row(
+                children: [
+                  IconButton(
+                      onPressed: () {
+                        if(Navigator.canPop(context)){
+                          Navigator.pop(context);
+                          setState(() {
+
+                          });
+                        }
+                      },
+                      icon: Icon(Icons.arrow_back)),
+                  Text('工具栏'),
+                ],
+              ),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
               ),
