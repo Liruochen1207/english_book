@@ -97,7 +97,7 @@ class _ConversationPageState extends State<ConversationPage> {
             this.text = text ?? "";
             Navigator.push(context, MaterialPageRoute(builder: (context) {
               return MyHomePage(
-                  isDarkness: widget.isDarkness, wordList: showWord);
+                  isDarkness: widget.isDarkness, wordList: showWord, startIndex: 0,);
             }));
           },
           data: conversationText,

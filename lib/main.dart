@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
             ),
       home: MyHomePage(
-        isDarkness: isDarkness, wordList: () { return []; },
+        isDarkness: isDarkness, wordList: () { return []; }, startIndex: 0,
       ),
     );
   }

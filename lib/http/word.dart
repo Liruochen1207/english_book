@@ -36,8 +36,12 @@ Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
 
 Future<void> submitOthers(String word, String other) async {
   if (other != "") {
-
-    }
+    var result = await dioPost("http://47.108.91.180:5000/update_other", {
+      "word" : word,
+      "other" : other,
+    });
+    print(result);
+  }
 }
 
 

@@ -16,8 +16,28 @@ class WordCard extends StatefulWidget {
   void Function() refresh = () {};
   WordCard({super.key, required this.word, required this.fatherWidgetState});
 
+  // List<dynamic> showWord()  {
+  //   return [word];
+  // }
+
+  List<dynamic> args()  {
+    List<String> ready = [];
+    int startIndex = 0;
+    var cardList = (fatherWidgetState._scollingList as List<dynamic>);
+    for (int i = cardList.length - 1; i >= 0; i--){
+      String word = cardList[i].word;
+      if (cardList[i] == this){
+        startIndex = cardList.length - 1 - i;
+      }
+      ready.add(word);
+    }
+    return [startIndex, ready];
+  }
   List<dynamic> showWord()  {
-    return [word];
+    return args()[1];
+  }
+  int showIndex()  {
+    return args()[0];
   }
 
   @override
@@ -84,8 +104,9 @@ class _WordCardState extends State<WordCard> {
               child: InkWell(
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    int index = widget.showIndex();
                     return MyHomePage(
-                        isDarkness: isDarkness, wordList: widget.showWord,);
+                        isDarkness: isDarkness, wordList: widget.showWord, startIndex: index,);
                   })).then((onValue) {
                     if (CustomCache.waitForAdd.hasCached()) {
                       widget.fatherWidgetState.initWordList();

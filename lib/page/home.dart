@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cache.dart';
+import '../custom_types.dart';
 
 class MyHomePage extends StatefulWidget {
   // This widget is the home page of your application. It is stateful, meaning
@@ -34,7 +35,8 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
   List<dynamic> words = [];
   List<dynamic> Function() wordList;
-  MyHomePage({super.key, required this.isDarkness, required this.wordList});
+  int startIndex;
+  MyHomePage({super.key, required this.isDarkness, required this.wordList, required this.startIndex});
 
   bool isDarkness;
 
@@ -55,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var _phonetic = "";
   var _explain = "";
   var _other = "";
+  WordDetails? _wordDetails;
   Uint8List? _voice;
   int _tableIndex = 0;
   String _letters = "abcdefghijklmnopqrstuvwxyz";
@@ -90,11 +93,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _counterMax() async {
-    _wordIndex = _words.length - 1;
-    setState(() {});
-    final SharedPreferencesWithCache prefs = await _prefs;
-    prefs.setInt('wordIndex', _wordIndex).then((_) {});
-    prefs.setInt('tableIndex', _tableIndex).then((_) {});
+    if (widget.wordList().isEmpty){
+      _wordIndex = _words.length - 1;
+      setState(() {});
+      final SharedPreferencesWithCache prefs = await _prefs;
+      prefs.setInt('wordIndex', _wordIndex).then((_) {});
+      prefs.setInt('tableIndex', _tableIndex).then((_) {});
+    }
   }
 
   Future<void> _incrementCounter(int delta) async {
@@ -104,8 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_tableIndex == -1 || _tableIndex == 26) {
       return;
     }
-    prefs.setInt('wordIndex', _wordIndex).then((_) {});
-    prefs.setInt('tableIndex', _tableIndex).then((_) {});
+    if (widget.wordList().isEmpty) {
+      prefs.setInt('wordIndex', _wordIndex).then((_) {});
+      prefs.setInt('tableIndex', _tableIndex).then((_) {});
+    }
   }
 
   void pageDown() {
@@ -135,6 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
       } else {
         _tableIndex += 1;
       }
+
       refreshTable((){_counterReset();});
     }
   }
@@ -385,17 +393,27 @@ class _MyHomePageState extends State<MyHomePage> {
                   IgnorePointer(
                     child: Padding(
                       padding: EdgeInsets.only(left: 30, right: 30),
-                      child: Text(
-                        '$_explain',
+                      child: Center(
+                        child: Text(
+                          '$_explain',
+                        ),
                       ),
                     ),
                   ),
                   IgnorePointer(
                     child: Padding(
                       padding: EdgeInsets.only(left: 30, right: 30),
-                      child: Text(
+                      child: Center(child: Text(
                         '$_other',
-                      ),
+                      ),)
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 30, right: 30),
+                      child: Center(child: Text(
+                        _wordDetails?.synonym ?? '',
+                      ),)
                     ),
                   ),
                 ],
@@ -493,6 +511,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<String>> explainWord(String word) async {
     List<String> ready = [];
     if (word != "") {
+      _wordDetails = await getWordDetails(word);
       ready = await englishSearch(word);
     }
     if (ready.isEmpty) {
@@ -522,7 +541,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _prefs.then((SharedPreferencesWithCache prefs) {
-      _wordIndex = prefs.getInt('wordIndex') ?? 0;
+      _wordIndex = widget.wordList().isEmpty ? prefs.getInt('wordIndex') ?? 0 : widget.startIndex;
     });
     _prefs.then((SharedPreferencesWithCache prefs) {
       _tableIndex = prefs.getInt('tableIndex') ?? 0;
@@ -536,17 +555,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 
-    if (Platform.isAndroid) {
-      wordScrollController.addListener(() {
-        isEndScrolling = wordScrollController.offset >=
-            wordScrollController.position.maxScrollExtent;
-        if (!isEndScrolling) {
-          isOverflowing = true;
-        }
-        setState(() {});
-        print(isEndScrolling);
-      });
-    }
+    // if (Platform.isAndroid) {
+    //   wordScrollController.addListener(() {
+    //     isEndScrolling = wordScrollController.offset >=
+    //         wordScrollController.position.maxScrollExtent;
+    //     if (!isEndScrolling) {
+    //       isOverflowing = true;
+    //     }
+    //     setState(() {});
+    //     print(isEndScrolling);
+    //   });
+    // }
     // refreshWord();
     // Create the audio player.
     player = AudioPlayer();
@@ -650,10 +669,25 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String pickWord(int index) {
-    return _words[index];
+    List wl = widget.wordList();
+    if (wl.isEmpty){
+      return _words[index];
+    }
+    if (wl.isNotEmpty &&_wordIndex >= wl.length){
+      index = 0;
+      _wordIndex = 0;
+    }
+    if (wl.isNotEmpty &&_wordIndex < 0){
+      index = wl.length - 1;
+      _wordIndex = wl.length - 1;
+    }
+    return wl[index];
   }
 
   Future<void> voiceManage() async {
+    if (_wordDetails != null && _wordDetails?.voice != null){
+      _voice = _wordDetails?.voice;
+    }
     if (_voice == null){
       await getSpeechBytes(_word).then((onValue) {
         _voice = onValue;

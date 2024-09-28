@@ -9,6 +9,8 @@ import 'package:html/dom.dart';
 import 'package:html/dom_parsing.dart';
 import 'package:html/parser.dart';
 
+import '../custom_types.dart';
+
 Future<dynamic> dioGet(String url, [query]) async {
   final dio = Dio();
   final response = await dio.get(url, queryParameters: query);
@@ -88,6 +90,22 @@ Future<List<String>> englishSearch(String word) async {
     return [];
   }
   return ready; // 打印存储的字符串
+}
+
+Future<WordDetails?> getWordDetails(String word) async {
+  final dio = Dio();
+  try {
+    final response  = await dio.post("http://47.108.91.180:5000/word?word=$word");
+    Map result  = response.data;
+    WordDetails wd = WordDetails(cet4: nBool(result["cet4"]), cet6: nBool(result["cet6"]),
+        gre: nBool(result["gre"]), ielts: nBool(result["ielts"]), toefl: nBool(result["toefl"]),
+        postgraduate: nBool(result["postgraduate"]), mean: result["mean"], synonym: showSym(result["synonym"]),
+        voice: bytesFromBase64(result["voice"]));
+    return wd;
+  } catch (e) {
+    print(e);
+  }
+  return null;
 }
 
 Future<Uint8List> getSpeechBytes(String word) async {
