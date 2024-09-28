@@ -193,33 +193,46 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor:
             widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
-        leading: Navigator.canPop(context) ?
-        IconButton(
-            onPressed: () {
-              if(Navigator.canPop(context)){
-                Navigator.pop(context);
-              }
-              setState(() {
-
-              });
-            },
-            icon: Icon(Icons.arrow_back)) :
-        IconButton(
-          icon: Icon(Icons.menu),
-          onPressed: () {
-            _scaffoldKey.currentState!.openDrawer();
-            setState(() {});
-          },
-        ),
+        // leading: Navigator.canPop(context) ?
+        // IconButton(
+        //     onPressed: () {
+        //       if(Navigator.canPop(context)){
+        //         Navigator.pop(context);
+        //       }
+        //       setState(() {
+        //
+        //       });
+        //     },
+        //     icon: Icon(Icons.arrow_back)) :
+        // IconButton(
+        //   icon: Icon(Icons.menu),
+        //   onPressed: () {
+        //     _scaffoldKey.currentState!.openDrawer();
+        //     setState(() {});
+        //   },
+        // ),
         actions: [
-
+          // IconButton(
+          //   icon: Icon(Icons.menu),
+          //   onPressed: () {
+          //     _scaffoldKey.currentState!.openDrawer();
+          //     setState(() {});
+          //   },
+          // ),
           IconButton(
               onPressed: () {
                 // randomWord();
                 _counterReset();
                 refreshWord();
               },
-              icon: Icon(Icons.sync)),
+              icon: Icon(Icons.keyboard_double_arrow_left)),
+          IconButton(
+              onPressed: () {
+                // randomWord();
+                _counterMax();
+                refreshWord();
+              },
+              icon: Icon(Icons.keyboard_double_arrow_right)),
         ],
       ),
       drawer: Drawer(
@@ -677,6 +690,8 @@ class _MyHomePageState extends State<MyHomePage> {
           pageUp();
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
+        } else if(event.position.dy < screenHeight / 2){
+          _scaffoldKey.currentState!.openDrawer();
         } else {
           speechWord(_speechType);
         }
@@ -727,7 +742,11 @@ class _MyHomePageState extends State<MyHomePage> {
       _phonetic = onValue;
       setState(() {});
     });
+    _explain = "";
+    _other = "";
+    setState(() {
 
+    });
     explainWord(_word).then((value) {
       print("搜索结果 => $value");
       // _searchResult = value;
