@@ -49,7 +49,7 @@ class _ConversationPageState extends State<ConversationPage> {
               '请为${Platform.operatingSystem}设备输出平均字体大小偏$avengeSize的严格markdown格式文本'
         },
         {'role': 'system', 'content': '每一个你给的英文句子需要翻译成中文写在它下面'},
-        {'role': 'system', 'content': '你需要为用户提供同义替换词、单词造句、语境说明、英英牛津该词原文'},
+        {'role': 'system', 'content': '你需要为用户提供形近词、同义替换词、反义词、单词造句、语境说明、英英牛津该词原文'},
         {'role': 'user', 'content': widget.word}
       ]
     };
