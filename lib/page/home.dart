@@ -876,15 +876,19 @@ class _MyHomePageState extends State<MyHomePage> {
     if (wl.isEmpty) {
       return _words[index];
     }
-    if (wl.isNotEmpty && _wordIndex >= wl.length) {
-      index = 0;
-      _wordIndex = 0;
+    if (wl.isNotEmpty){
+      if ( _wordIndex >= wl.length) {
+        index = 0;
+        _wordIndex = 0;
+      }
+      if ( _wordIndex < 0) {
+        index = wl.length - 1;
+        _wordIndex = wl.length - 1;
+      }
+      saveNewWord(_word);
     }
-    if (wl.isNotEmpty && _wordIndex < 0) {
-      index = wl.length - 1;
-      _wordIndex = wl.length - 1;
-    }
-    saveNewWord(_word);
+
+
     return wl[index];
   }
 
