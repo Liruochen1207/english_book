@@ -603,7 +603,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           )),
                       IconButton(
                           onPressed: () {
-                            saveNewWord(_word);
                             Navigator.push(context,
                                 MaterialPageRoute(builder: (context) {
                               return CollectPage(
@@ -885,6 +884,7 @@ class _MyHomePageState extends State<MyHomePage> {
       index = wl.length - 1;
       _wordIndex = wl.length - 1;
     }
+    saveNewWord(_word);
     return wl[index];
   }
 
