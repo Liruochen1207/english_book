@@ -74,6 +74,32 @@ Future<List<dynamic>> getWords(String letter) async {
 }
 
 
+Future<bool> getWordExist(String word) async {
+  var data = await dioPost("http://47.108.91.180:5000/exist", {
+    "word" : word,
+  });
+  if (data.containsKey('exist')){
+    print(data['exist']==true);
+    return data['exist']==true;
+  }
+
+  return false;
+}
+
+Future<void> saveNewWord(String word) async {
+  getWordExist(word).then((value){
+    print("EXIST $value");
+    if (!value && !word.contains(" ")){
+      dioPost("http://47.108.91.180:5000/new_word", {
+        "word" : word,
+      }).then((onValue){
+        print(onValue);
+      });
+    }
+  });
+}
+
+
 // Future<List<List<dynamic>>> getWords(MySQLConnection? connection) async {
 //   List<List<dynamic>> readyReturns = [];
 //   if (connection != null && connection!.connected) {

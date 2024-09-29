@@ -603,6 +603,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           )),
                       IconButton(
                           onPressed: () {
+                            saveNewWord(_word);
                             Navigator.push(context,
                                 MaterialPageRoute(builder: (context) {
                               return CollectPage(

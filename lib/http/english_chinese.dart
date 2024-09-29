@@ -108,6 +108,8 @@ Future<WordDetails?> getWordDetails(String word) async {
   return null;
 }
 
+
+
 Future<List<String>?> getCustomSearch(String word) async {
   final dio = Dio();
   try {
