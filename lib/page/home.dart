@@ -885,10 +885,10 @@ class _MyHomePageState extends State<MyHomePage> {
         index = wl.length - 1;
         _wordIndex = wl.length - 1;
       }
-      saveNewWord(_word);
+
     }
 
-
+    saveNewWord(wl[index]);
     return wl[index];
   }
 

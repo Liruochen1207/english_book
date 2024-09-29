@@ -35,12 +35,14 @@ Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
 }
 
 Future<void> submitOthers(String word, String other) async {
-  if (other != "") {
-    var result = await dioPost("http://47.108.91.180:5000/update_other", {
-      "word" : word,
-      "other" : other,
-    });
-    print(result);
+  if (generateAlphabet().contains(word[0])){
+    if (other != "") {
+      var result = await dioPost("http://47.108.91.180:5000/update_other", {
+        "word" : word,
+        "other" : other,
+      });
+      print(result);
+    }
   }
 }
 
@@ -87,18 +89,30 @@ Future<bool> getWordExist(String word) async {
 }
 
 Future<void> saveNewWord(String word) async {
-  getWordExist(word).then((value){
-    print("EXIST $value");
-    if (!value && !word.contains(" ")){
-      dioPost("http://47.108.91.180:5000/new_word", {
-        "word" : word,
-      }).then((onValue){
-        print(onValue);
-      });
-    }
-  });
+  if (generateAlphabet().contains(word[0])){
+    getWordExist(word).then((value){
+      print(word);
+      print("EXIST $value");
+      if (!value && !word.contains(" ")){
+        dioPost("http://47.108.91.180:5000/new_word", {
+          "word" : word,
+        }).then((onValue){
+          print(onValue);
+        });
+      }
+    });
+  }
+
 }
 
+String generateAlphabet() {
+  final List<String> alphabet = [];
+  for (int i = 'a'.codeUnitAt(0); i <= 'z'.codeUnitAt(0); i++) {
+    alphabet.add(String.fromCharCode(i));
+  }
+  print(alphabet);
+  return alphabet.join();
+}
 
 // Future<List<List<dynamic>>> getWords(MySQLConnection? connection) async {
 //   List<List<dynamic>> readyReturns = [];
