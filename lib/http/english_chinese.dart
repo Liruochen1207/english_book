@@ -108,6 +108,22 @@ Future<WordDetails?> getWordDetails(String word) async {
   return null;
 }
 
+Future<List<String>?> getCustomSearch(String word) async {
+  final dio = Dio();
+  try {
+    final response  = await dio.post("http://47.108.91.180:5000/search?word=$word&type=0");
+    List<String> ready = [];
+    List<dynamic> results = response.data['results'];
+    results.forEach((element){
+      ready.add(element);
+    });
+    return ready;
+  } catch (e) {
+    print(e);
+  }
+  return null;
+}
+
 Future<Uint8List> getSpeechBytes(String word) async {
   final dio = Dio();
   final response = await dio.get("https://dict.youdao.com/dictvoice/",

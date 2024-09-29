@@ -24,6 +24,59 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../cache.dart';
 import '../custom_types.dart';
 
+class ClickableQuarterCircle extends StatelessWidget {
+  void Function() onClick = () {};
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        onClick();
+      },
+      child: Container(
+        width: 60,
+        height: 60,
+        child: Stack(
+          children: [
+            // Positioned.fill(child: Container(color: Colors.red,)),
+            Positioned(
+                top: -50,
+                left: -50,
+                child: CustomPaint(
+                  painter: QuarterCirclePainter(),
+                  size: Size(100, 100),
+                )),
+            Positioned(
+                top: 5,
+                left: 7,
+                child: Icon(Icons.turn_left)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QuarterCirclePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+
+    // Adjust the rect to start from the top left corner
+    Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    // Start the arc from 0 (x-axis) to pi/2 (90 degrees clockwise from the x-axis)
+    // which will draw the quarter circle in the bottom left quadrant
+    canvas.drawArc(rect, 0, 3.14 / 2, true, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -36,7 +89,11 @@ class MyHomePage extends StatefulWidget {
   List<dynamic> words = [];
   List<dynamic> Function() wordList;
   int startIndex;
-  MyHomePage({super.key, required this.isDarkness, required this.wordList, required this.startIndex});
+  MyHomePage(
+      {super.key,
+      required this.isDarkness,
+      required this.wordList,
+      required this.startIndex});
 
   bool isDarkness;
 
@@ -51,7 +108,11 @@ class _MyHomePageState extends State<MyHomePage> {
   int _wordIndex = 0;
   int _delta = 0;
   final int _speechType = 2;
-  // List<String> _searchResult = [];
+  double _searchBarDefaultWidth = 200;
+  double _searchBarWidth = 200;
+  bool _tapingOnSearchBar = false;
+  bool _typingInSearchBar = false;
+  List<String> _suggestions = []; //word search
   List _words = [];
   var _word = "";
   var _phonetic = "";
@@ -63,6 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _letters = "abcdefghijklmnopqrstuvwxyz";
   bool portalOpened = false;
   // MySQLConnection? connection;
+  final TextEditingController _searchController = TextEditingController();
   ScrollController wordScrollController = ScrollController();
   bool isOverflowing = false;
   bool isEndScrolling = false;
@@ -78,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
       SharedPreferencesWithCache.create(
           cacheOptions: const SharedPreferencesWithCacheOptions(
               // This cache will only accept the key 'counter'.
-              allowList: <String>{'wordIndex' , 'tableIndex'}));
+              allowList: <String>{'wordIndex', 'tableIndex'}));
 
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
@@ -93,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _counterMax() async {
-    if (widget.wordList().isEmpty){
+    if (widget.wordList().isEmpty) {
       _wordIndex = _words.length - 1;
       setState(() {});
       final SharedPreferencesWithCache prefs = await _prefs;
@@ -116,34 +178,35 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void pageDown() {
-
-    if (_wordIndex >  0) {
+    if (_wordIndex > 0) {
       _incrementCounter(-1);
       refreshWord();
     } else {
-      if (_tableIndex - 1 >= 0){
+      if (_tableIndex - 1 >= 0) {
         _tableIndex -= 1;
       } else {
         _tableIndex = 25;
       }
-      refreshTable((){_counterMax();});
+      refreshTable(() {
+        _counterMax();
+      });
     }
   }
 
   void pageUp() {
     if (_wordIndex < (_words.length - 1)) {
-
       _incrementCounter(1);
       refreshWord();
     } else {
-
-      if (_tableIndex > 24){
+      if (_tableIndex > 24) {
         _tableIndex = 0;
       } else {
         _tableIndex += 1;
       }
 
-      refreshTable((){_counterReset();});
+      refreshTable(() {
+        _counterReset();
+      });
     }
   }
 
@@ -174,6 +237,30 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // 模拟联想词的生成
+  void _updateSuggestions(String query) {
+    setState(() {
+      _typingInSearchBar = true;
+      if (query.isEmpty) {
+        _suggestions = [];
+      } else {
+        Future.delayed(Duration(milliseconds: 300), () {
+          _typingInSearchBar = false;
+        });
+        // 这里可以替换为从你的数据源获取联想词的逻辑
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (!_typingInSearchBar) {
+            getCustomSearch(query).then((values) {
+              setState(() {
+                _suggestions = values!;
+              });
+            });
+          }
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -193,47 +280,96 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor:
             widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
-        // leading: Navigator.canPop(context) ?
-        // IconButton(
-        //     onPressed: () {
-        //       if(Navigator.canPop(context)){
-        //         Navigator.pop(context);
-        //       }
-        //       setState(() {
-        //
-        //       });
-        //     },
-        //     icon: Icon(Icons.arrow_back)) :
-        // IconButton(
-        //   icon: Icon(Icons.menu),
-        //   onPressed: () {
-        //     _scaffoldKey.currentState!.openDrawer();
-        //     setState(() {});
-        //   },
-        // ),
-        actions: [
-          // IconButton(
-          //   icon: Icon(Icons.menu),
-          //   onPressed: () {
-          //     _scaffoldKey.currentState!.openDrawer();
-          //     setState(() {});
-          //   },
-          // ),
-          IconButton(
-              onPressed: () {
-                // randomWord();
-                _counterReset();
-                refreshWord();
+        title: Center(
+          // 使用TextField作为搜索框
+          child: Container(
+            // 设置搜索框的宽度
+            width: _searchBarWidth,
+            // 使用装饰器来给搜索框添加边框
+            decoration: BoxDecoration(
+              color: widget.isDarkness ? Colors.white12 : Colors.white54,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            // 搜索框内的内容
+            child: TextField(
+              controller: _searchController,
+              onChanged: _updateSuggestions,
+              onTap: () {
+                setState(() {
+                  _tapingOnSearchBar = true;
+                  _searchBarWidth = screenWidth;
+                });
               },
-              icon: Icon(Icons.keyboard_double_arrow_left)),
-          IconButton(
-              onPressed: () {
-                // randomWord();
-                _counterMax();
-                refreshWord();
+              onTapOutside: (value) {
+                setState(() {
+                  _tapingOnSearchBar = false;
+                  _searchBarWidth = _searchBarDefaultWidth;
+                });
               },
-              icon: Icon(Icons.keyboard_double_arrow_right)),
-        ],
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return MyHomePage(
+                      isDarkness: widget.isDarkness,
+                      wordList: () {
+                        return [value];
+                      },
+                      startIndex: 0,
+                    );
+                  }));
+                }
+              },
+              decoration: InputDecoration(
+                // 设置搜索框内部的边距
+                contentPadding: EdgeInsets.all(10),
+                // 设置搜索框的图标
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: _suggestions.isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _suggestions = [];
+                            _tapingOnSearchBar = false;
+                            _searchBarWidth = _searchBarDefaultWidth;
+                          });
+                        },
+                        icon: Icon(Icons.close))
+                    : null,
+                // 设置搜索框的提示文字
+                hintText: '搜索',
+                // 移除搜索框的边框
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ),
+        leading: _tapingOnSearchBar ? const SizedBox() : null,
+        actions: _tapingOnSearchBar
+            ? []
+            : [
+                // IconButton(
+                //   icon: Icon(Icons.menu),
+                //   onPressed: () {
+                //     _scaffoldKey.currentState!.openDrawer();
+                //     setState(() {});
+                //   },
+                // ),
+                IconButton(
+                    onPressed: () {
+                      // randomWord();
+                      _counterReset();
+                      refreshWord();
+                    },
+                    icon: Icon(Icons.keyboard_double_arrow_left)),
+                IconButton(
+                    onPressed: () {
+                      // randomWord();
+                      _counterMax();
+                      refreshWord();
+                    },
+                    icon: Icon(Icons.keyboard_double_arrow_right)),
+              ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -244,11 +380,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   IconButton(
                       onPressed: () {
-                        if(Navigator.canPop(context)){
+                        if (Navigator.canPop(context)) {
                           Navigator.pop(context);
-                          setState(() {
-
-                          });
+                          setState(() {});
                         }
                       },
                       icon: Icon(Icons.arrow_back)),
@@ -289,238 +423,275 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      body: Stack(
-        children: [
-          TemplateCard(
-            focusNode: backgroundFocus,
-            listenerRegister: registerHandler,
-            eventHandlerList: eventHandlerList,
-            color: Color.fromARGB(0, 215, 223, 180),
-          ),
-          Column(
-            // Column is also a layout widget. It takes a list of children and
-            // arranges them vertically. By default, it sizes itself to fit its
-            // children horizontally, and tries to be as tall as its parent.
-            //
-            // Column has various properties to control how it sizes itself and
-            // how it positions its children. Here we use mainAxisAlignment to
-            // center the children vertically; the main axis here is the vertical
-            // axis because Columns are vertical (the cross axis would be
-            // horizontal).
-            //
-            // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-            // action in the IDE, or press "p" in the console), to see the
-            // wireframe for each widget.
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  isLongWord
-                      ? const SizedBox()
-                      : Padding(
-                          padding: EdgeInsets.only(left: 0, bottom: 40),
-                          child: Center(
-                            child: Text(
-                              '$_word',
-                              style: TextStyle(
-                                  fontSize: Platform.isAndroid ? 32 : 35),
-                            ),
-                          ),
-                        ),
-                  isLongWord
-                      ? Padding(
-                          padding:
-                              EdgeInsets.only(left: 24, right: 30, bottom: 20),
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: Scrollbar(
-                              thumbVisibility: true,
-                              child: SingleChildScrollView(
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 16),
+      body: _suggestions.isEmpty
+          ? Stack(
+              children: [
+                TemplateCard(
+                  focusNode: backgroundFocus,
+                  listenerRegister: registerHandler,
+                  eventHandlerList: eventHandlerList,
+                  color: Color.fromARGB(0, 215, 223, 180),
+                ),
+                Column(
+                  // Column is also a layout widget. It takes a list of children and
+                  // arranges them vertically. By default, it sizes itself to fit its
+                  // children horizontally, and tries to be as tall as its parent.
+                  //
+                  // Column has various properties to control how it sizes itself and
+                  // how it positions its children. Here we use mainAxisAlignment to
+                  // center the children vertically; the main axis here is the vertical
+                  // axis because Columns are vertical (the cross axis would be
+                  // horizontal).
+                  //
+                  // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+                  // action in the IDE, or press "p" in the console), to see the
+                  // wireframe for each widget.
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        isLongWord
+                            ? const SizedBox()
+                            : Padding(
+                                padding: EdgeInsets.only(left: 0, bottom: 40),
+                                child: Center(
                                   child: Text(
                                     '$_word',
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20),
+                                        fontSize: Platform.isAndroid ? 32 : 35),
                                   ),
                                 ),
                               ),
+                        isLongWord
+                            ? Padding(
+                                padding: EdgeInsets.only(
+                                    left: 24, right: 30, bottom: 20),
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  child: Scrollbar(
+                                    thumbVisibility: true,
+                                    child: SingleChildScrollView(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(right: 16),
+                                        child: Text(
+                                          '$_word',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 20),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  height: 200,
+                                ),
+                              )
+                            : const SizedBox(),
+                        isLongWord
+                            ? const IgnorePointer(
+                                child: Divider(),
+                              )
+                            : const SizedBox(),
+                        IgnorePointer(
+                          child: Padding(
+                            padding: EdgeInsets.only(),
+                            child: Center(
+                              child: Text(_phonetic),
                             ),
-                            height: 200,
                           ),
-                        )
-                      : const SizedBox(),
-                  isLongWord
-                      ? const IgnorePointer(
-                          child: Divider(),
-                        )
-                      : const SizedBox(),
-                  IgnorePointer(
-                    child: Padding(
-                      padding: EdgeInsets.only(),
-                      child: Center(
-                        child: Text(_phonetic),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Padding(
-              //     padding: EdgeInsets.only(left: 30),
-              //     child: Row(
-              //       children: [
-              //         GestureDetector(
-              //           child: Container(
-              //             width: screenWidth / 1.37,
-              //             child: SingleChildScrollView(
-              //               controller: wordScrollController,
-              //               scrollDirection: Axis.horizontal,
-              //               child: Text(
-              //                 '$_word',
-              //                 style: TextStyle(
-              //                     fontSize: Platform.isAndroid ? 32 : 35),
-              //               ),
-              //             ),
-              //           ),
-              //           onHorizontalDragUpdate: (value) {
-              //             if (!Platform.isAndroid) {
-              //               double maxPos = wordScrollController
-              //                   .position.maxScrollExtent;
-              //               double lastPos = wordScrollController.offset;
-              //               wordScrollController
-              //                   .jumpTo(lastPos -= value.delta.dx);
-              //               double nowPos = wordScrollController.offset;
-              //               isEndScrolling = nowPos >= maxPos;
-              //               print(nowPos);
-              //               setState(() {});
-              //             }
-              //           },
-              //         ),
-              //         (isOverflowing && (!isEndScrolling))
-              //             ? Transform.translate(
-              //                 offset: Offset(4, 0),
-              //                 child: Text(
-              //                   '...',
-              //                   style: TextStyle(fontSize: 35),
-              //                 ),
-              //               )
-              //             : const SizedBox(),
-              //       ],
-              //     ),
-              //   ),
-
-              isLongWord
-                  ? const IgnorePointer(
-                      child: SizedBox(
-                        height: 20,
-                      ),
-                    )
-                  : const SizedBox(),
-              Column(
-                children: [
-                  IgnorePointer(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 30, right: 30),
-                      child: Center(
-                        child: Text(
-                          '$_explain',
                         ),
-                      ),
+                      ],
                     ),
-                  ),
-                  IgnorePointer(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 30, right: 30),
-                      child: Center(child: Text(
-                        '$_other',
-                      ),)
+
+                    // Padding(
+                    //     padding: EdgeInsets.only(left: 30),
+                    //     child: Row(
+                    //       children: [
+                    //         GestureDetector(
+                    //           child: Container(
+                    //             width: screenWidth / 1.37,
+                    //             child: SingleChildScrollView(
+                    //               controller: wordScrollController,
+                    //               scrollDirection: Axis.horizontal,
+                    //               child: Text(
+                    //                 '$_word',
+                    //                 style: TextStyle(
+                    //                     fontSize: Platform.isAndroid ? 32 : 35),
+                    //               ),
+                    //             ),
+                    //           ),
+                    //           onHorizontalDragUpdate: (value) {
+                    //             if (!Platform.isAndroid) {
+                    //               double maxPos = wordScrollController
+                    //                   .position.maxScrollExtent;
+                    //               double lastPos = wordScrollController.offset;
+                    //               wordScrollController
+                    //                   .jumpTo(lastPos -= value.delta.dx);
+                    //               double nowPos = wordScrollController.offset;
+                    //               isEndScrolling = nowPos >= maxPos;
+                    //               print(nowPos);
+                    //               setState(() {});
+                    //             }
+                    //           },
+                    //         ),
+                    //         (isOverflowing && (!isEndScrolling))
+                    //             ? Transform.translate(
+                    //                 offset: Offset(4, 0),
+                    //                 child: Text(
+                    //                   '...',
+                    //                   style: TextStyle(fontSize: 35),
+                    //                 ),
+                    //               )
+                    //             : const SizedBox(),
+                    //       ],
+                    //     ),
+                    //   ),
+
+                    isLongWord
+                        ? const IgnorePointer(
+                            child: SizedBox(
+                              height: 20,
+                            ),
+                          )
+                        : const SizedBox(),
+                    Column(
+                      children: [
+                        IgnorePointer(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 30, right: 30),
+                            child: Center(
+                              child: Text(
+                                '$_explain',
+                              ),
+                            ),
+                          ),
+                        ),
+                        IgnorePointer(
+                          child: Padding(
+                              padding: EdgeInsets.only(left: 30, right: 30),
+                              child: Center(
+                                child: Text(
+                                  '$_other',
+                                ),
+                              )),
+                        ),
+                        IgnorePointer(
+                          child: Padding(
+                              padding: EdgeInsets.only(left: 30, right: 30),
+                              child: Center(
+                                child: Text(
+                                  _wordDetails?.synonym ?? '',
+                                ),
+                              )),
+                        ),
+                      ],
                     ),
+                  ],
+                ), // This trailing comma makes auto-formatting nicer for build methods.
+                Positioned(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                          onPressed: () {
+                            speechWord(_speechType);
+                          },
+                          icon: Icon(
+                            Icons.volume_up,
+                            size: 26,
+                          )),
+                      IconButton(
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) {
+                              return CollectPage(
+                                word: _word,
+                              );
+                            })).then((onValue) {
+                              if (!Navigator.canPop(context)) {
+                                CustomCache.waitForAdd.clearAll();
+                              }
+                            });
+                          },
+                          icon: Icon(
+                            Icons.star_border,
+                            size: 26,
+                            color: Colors.amber,
+                          )),
+                    ],
                   ),
-                  IgnorePointer(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 30, right: 30),
-                      child: Center(child: Text(
-                        _wordDetails?.synonym ?? '',
-                      ),)
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ), // This trailing comma makes auto-formatting nicer for build methods.
-          Positioned(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                    onPressed: () {
-                      speechWord(_speechType);
-                    },
-                    icon: Icon(
-                      Icons.volume_up,
-                      size: 26,
-                    )),
-                IconButton(
-                    onPressed: () {
+                ),
+                // Positioned(
+                //     bottom: 40,
+                //     right: 40,
+                //     child: FloatingActionButton(
+                //       child: Icon(Icons.library_books),
+                //       onPressed: () {
+                //         gatePortal();
+                //       },
+                //     )),
+                // Positioned(
+                //     bottom: 40,
+                //     right: 120,
+                //     child: FloatingActionButton(
+                //       child: const Center(
+                //         child: Text(
+                //           "AI",
+                //           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                //         ),
+                //       ),
+                //       onPressed: () {
+                //         Navigator.push(context, MaterialPageRoute(builder: (context) {
+                //           return ConversationPage(
+                //             isDarkness: widget.isDarkness,
+                //             word: _word,
+                //           );
+                //         }));
+                //       },
+                //     )),
+                Navigator.canPop(context) ? Positioned(
+                    // top: -50,
+                    //   left: -50,
+                    child: ClickableQuarterCircle()
+                      ..onClick = () {
+                        if (Navigator.canPop(context)){
+                          Navigator.pop(context);
+                        }
+                      }) : const SizedBox(),
+              ],
+            )
+          : ListView.builder(
+              itemCount: _suggestions.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_suggestions[index]),
+                  onTap: () {
+                    // 处理搜索联想词的点击事件
+                    _searchController.text = _suggestions[index];
+                    if (_searchController.text.isNotEmpty) {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return CollectPage(
-                          word: _word,
+                        return MyHomePage(
+                          isDarkness: widget.isDarkness,
+                          wordList: () {
+                            return [_searchController.text];
+                          },
+                          startIndex: 0,
                         );
-                      })).then((onValue) {
-                        if (!Navigator.canPop(context)) {
-                          CustomCache.waitForAdd.clearAll();
-                        }
-                      });
-                    },
-                    icon: Icon(
-                      Icons.star_border,
-                      size: 26,
-                      color: Colors.amber,
-                    )),
-              ],
+                      }));
+                    }
+                    // 可以在这里添加跳转到搜索结果页面的逻辑
+                  },
+                );
+              },
             ),
-          ),
-          // Positioned(
-          //     bottom: 40,
-          //     right: 40,
-          //     child: FloatingActionButton(
-          //       child: Icon(Icons.library_books),
-          //       onPressed: () {
-          //         gatePortal();
-          //       },
-          //     )),
-          // Positioned(
-          //     bottom: 40,
-          //     right: 120,
-          //     child: FloatingActionButton(
-          //       child: const Center(
-          //         child: Text(
-          //           "AI",
-          //           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-          //         ),
-          //       ),
-          //       onPressed: () {
-          //         Navigator.push(context, MaterialPageRoute(builder: (context) {
-          //           return ConversationPage(
-          //             isDarkness: widget.isDarkness,
-          //             word: _word,
-          //           );
-          //         }));
-          //       },
-          //     )),
-        ],
-      ),
     );
   }
 
   Future<void> updateData() async {
     print("尝试注入单词 $_word");
-    submitOthers( _word, _other);
+    submitOthers(_word, _other);
   }
 
   Future<void> randomWord() async {
@@ -573,19 +744,17 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _prefs.then((SharedPreferencesWithCache prefs) {
-      _wordIndex = widget.wordList().isEmpty ? prefs.getInt('wordIndex') ?? 0 : widget.startIndex;
+      _wordIndex = widget.wordList().isEmpty
+          ? prefs.getInt('wordIndex') ?? 0
+          : widget.startIndex;
     });
     _prefs.then((SharedPreferencesWithCache prefs) {
       _tableIndex = prefs.getInt('tableIndex') ?? 0;
-      refreshTable((){});
+      refreshTable(() {});
     });
-      // widget.words = widget.wordList();
-      // print(widget.words);
-      // connectSQL();
-
-
-
-
+    // widget.words = widget.wordList();
+    // print(widget.words);
+    // connectSQL();
 
     // if (Platform.isAndroid) {
     //   wordScrollController.addListener(() {
@@ -690,7 +859,7 @@ class _MyHomePageState extends State<MyHomePage> {
           pageUp();
         } else if (event.position.dx <= screenWidth / 3) {
           pageDown();
-        } else if(event.position.dy < screenHeight / 2){
+        } else if (event.position.dy < screenHeight / 2) {
           _scaffoldKey.currentState!.openDrawer();
         } else {
           speechWord(_speechType);
@@ -704,14 +873,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String pickWord(int index) {
     List wl = widget.wordList();
-    if (wl.isEmpty){
+    if (wl.isEmpty) {
       return _words[index];
     }
-    if (wl.isNotEmpty &&_wordIndex >= wl.length){
+    if (wl.isNotEmpty && _wordIndex >= wl.length) {
       index = 0;
       _wordIndex = 0;
     }
-    if (wl.isNotEmpty &&_wordIndex < 0){
+    if (wl.isNotEmpty && _wordIndex < 0) {
       index = wl.length - 1;
       _wordIndex = wl.length - 1;
     }
@@ -719,10 +888,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> voiceManage() async {
-    if (_wordDetails != null && _wordDetails?.voice != null){
+    if (_wordDetails != null && _wordDetails?.voice != null) {
       _voice = _wordDetails?.voice;
     }
-    if (_voice == null){
+    if (_voice == null) {
       await getSpeechBytes(_word).then((onValue) {
         _voice = onValue;
       });
@@ -731,7 +900,6 @@ class _MyHomePageState extends State<MyHomePage> {
     player.setReleaseMode(ReleaseMode.stop);
     player.setSource(BytesSource(_voice!));
     player.resume();
-
   }
 
   void refreshWord() {
@@ -744,12 +912,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     _explain = "";
     _other = "";
-    setState(() {
-
-    });
+    setState(() {});
     explainWord(_word).then((value) {
       print("搜索结果 => $value");
-      // _searchResult = value;
       _explain = value.first;
       _other = '';
       for (var i = 0; i < value.length; i++) {
