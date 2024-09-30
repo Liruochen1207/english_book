@@ -144,6 +144,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isEndScrolling = false;
   double textProportion = 15.6;
 
+  bool _showAppbar = true;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
@@ -288,97 +290,104 @@ class _MyHomePageState extends State<MyHomePage> {
         isOverflowing = wordScrollController.position.maxScrollExtent > 0;
       }
     } catch (e) {}
-    bool isLongWord = _word.contains(" ") || _word.length > 10;
+    bool isLongWord = _word.contains(" ") || _word.length > 14;
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        backgroundColor:
-            widget.isDarkness ? Color.fromARGB(255, 82, 46, 145) : Colors.amber,
-        title: Center(
-          // 使用TextField作为搜索框
-          child: Container(
-            // 设置搜索框的宽度
-            width: _searchBarWidth,
-            // 使用装饰器来给搜索框添加边框
-            decoration: BoxDecoration(
-              color: widget.isDarkness ? Colors.white12 : Colors.white54,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            // 搜索框内的内容
-            child: PopScope(
-                canPop: _canPop,
-                onPopInvoked: (value) {
-                  if (!_canPop) {
-                    setState(() {
-                      _canPop = Navigator.canPop(context);
-                      _searchController.clear();
-                      _suggestions = [];
-                      _tapingOnSearchBar = false;
-                      _searchBarWidth = _searchBarDefaultWidth;
-                    });
-                  }
-                },
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _updateSuggestions,
-                  onTap: () {
-                    setState(() {
-                      _canPop = false;
-                      _tapingOnSearchBar = true;
-                      _searchBarWidth = screenWidth;
-                    });
-                  },
-                  onTapOutside: (value) {
-                    setState(() {
-                      _canPop = Navigator.canPop(context);
-                      _tapingOnSearchBar = false;
-                      _searchBarWidth = _searchBarDefaultWidth;
-                    });
-                  },
-                  onSubmitted: (value) {
-                    if (value.isNotEmpty) {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return MyHomePage(
-                          isDarkness: widget.isDarkness,
-                          wordList: () {
-                            return [value];
-                          },
-                          startIndex: 0,
-                        );
-                      }));
-                    }
-                  },
-                  decoration: InputDecoration(
-                    // 设置搜索框内部的边距
-                    contentPadding: EdgeInsets.all(10),
-                    // 设置搜索框的图标
-                    prefixIcon: Icon(Icons.search),
-                    suffixIcon: _suggestions.isNotEmpty
-                        ? IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _canPop = Navigator.canPop(context);
-                                _searchController.clear();
-                                _suggestions = [];
-                                _tapingOnSearchBar = false;
-                                _searchBarWidth = _searchBarDefaultWidth;
-                              });
-                            },
-                            icon: Icon(Icons.close))
-                        : null,
-                    // 设置搜索框的提示文字
-                    hintText: '搜索',
-                    // 移除搜索框的边框
-                    border: InputBorder.none,
+      appBar: _showAppbar
+          ? AppBar(
+              toolbarHeight: 70,
+              backgroundColor: widget.isDarkness
+                  ? Color.fromARGB(255, 82, 46, 145)
+                  : Colors.amber,
+              title: Center(
+                // 使用TextField作为搜索框
+                child: Container(
+                  // 设置搜索框的宽度
+                  width: _searchBarWidth,
+                  // 使用装饰器来给搜索框添加边框
+                  decoration: BoxDecoration(
+                    color: _tapingOnSearchBar
+                        ? Colors.white24
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                )),
-          ),
-        ),
-        leading: _tapingOnSearchBar ? const SizedBox() : null,
-        actions: _tapingOnSearchBar
-            ? []
-            : [
+                  // 搜索框内的内容
+                  child: PopScope(
+                      canPop: _canPop,
+                      onPopInvoked: (value) {
+                        if (!_canPop) {
+                          setState(() {
+                            _canPop = Navigator.canPop(context);
+                            _searchController.clear();
+                            _suggestions = [];
+                            _tapingOnSearchBar = false;
+                            _searchBarWidth = _searchBarDefaultWidth;
+                            backgroundFocus.requestFocus();
+                          });
+                        }
+                      },
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _updateSuggestions,
+                        onTap: () {
+                          setState(() {
+                            _canPop = false;
+                            _tapingOnSearchBar = true;
+                            _searchBarWidth = _searchBarDefaultWidth;
+                          });
+                        },
+                        onTapOutside: (value) {
+                          setState(() {
+                            _canPop = Navigator.canPop(context);
+                            _tapingOnSearchBar = false;
+                            _searchBarWidth = _searchBarDefaultWidth;
+                          });
+                        },
+                        onSubmitted: (value) {
+                          if (value.isNotEmpty) {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) {
+                              return MyHomePage(
+                                isDarkness: widget.isDarkness,
+                                wordList: () {
+                                  return [value];
+                                },
+                                startIndex: 0,
+                              );
+                            }));
+                          }
+                        },
+                        decoration: InputDecoration(
+                          // 设置搜索框内部的边距
+                          contentPadding: EdgeInsets.all(10),
+                          // 设置搜索框的图标
+                          prefixIcon: Icon(Icons.search),
+                          suffixIcon: _suggestions.isNotEmpty
+                              ? IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _canPop = Navigator.canPop(context);
+                                      _searchController.clear();
+                                      _suggestions = [];
+                                      _tapingOnSearchBar = false;
+                                      _searchBarWidth = _searchBarDefaultWidth;
+                                    });
+                                  },
+                                  icon: Icon(Icons.close))
+                              : null,
+                          // 设置搜索框的提示文字
+                          hintText: '搜索',
+                          // 移除搜索框的边框
+                          border: InputBorder.none,
+                        ),
+                      )),
+                ),
+              ),
+              // leading: _tapingOnSearchBar ? const SizedBox() : null,
+              actions:
+                  // _tapingOnSearchBar
+                  //     ? []:
+                  [
                 // IconButton(
                 //   icon: Icon(Icons.menu),
                 //   onPressed: () {
@@ -387,21 +396,37 @@ class _MyHomePageState extends State<MyHomePage> {
                 //   },
                 // ),
                 IconButton(
-                    onPressed: () {
-                      // randomWord();
+                  onPressed: () {
+                    // randomWord();
+                    if (_tableIndex - 1 >= 0) {
+                      _tableIndex -= 1;
+                    } else {
+                      _tableIndex = 25;
+                    }
+                    refreshTable(() {
                       _counterReset();
-                      refreshWord();
-                    },
-                    icon: Icon(Icons.keyboard_double_arrow_left)),
+                    });
+                  },
+                  icon: Icon(Icons.keyboard_double_arrow_left),
+                  iconSize: 30,
+                ),
                 IconButton(
-                    onPressed: () {
-                      // randomWord();
-                      _counterMax();
-                      refreshWord();
-                    },
-                    icon: Icon(Icons.keyboard_double_arrow_right)),
+                  onPressed: () {
+                    if (_tableIndex > 24) {
+                      _tableIndex = 0;
+                    } else {
+                      _tableIndex += 1;
+                    }
+                    refreshTable(() {
+                      _counterReset();
+                    });
+                  },
+                  icon: Icon(Icons.keyboard_double_arrow_right),
+                  iconSize: 30,
+                ),
               ],
-      ),
+            )
+          : null,
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -477,9 +502,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
                   // action in the IDE, or press "p" in the console), to see the
                   // wireframe for each widget.
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: isLongWord
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    const SizedBox(
+                      height: 1,
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -526,7 +556,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             : const SizedBox(),
                         IgnorePointer(
                           child: Padding(
-                            padding: EdgeInsets.only(),
+                            padding: EdgeInsets.only(left: 40, right: 40),
                             child: Center(
                               child: Text(_phonetic),
                             ),
@@ -598,25 +628,32 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
-                        IgnorePointer(
-                          child: Padding(
-                              padding: EdgeInsets.only(left: 30, right: 30),
-                              child: Center(
-                                child: Text(
-                                  '$_other',
-                                ),
-                              )),
-                        ),
-                        IgnorePointer(
-                          child: Padding(
-                              padding: EdgeInsets.only(left: 30, right: 30),
-                              child: Center(
-                                child: Text(
-                                  _wordDetails?.synonym ?? '',
-                                ),
-                              )),
-                        ),
                       ],
+                    ),
+                    isLongWord
+                        ? const IgnorePointer(
+                            child: SizedBox(
+                              height: 200,
+                            ),
+                          )
+                        : const SizedBox(),
+                    IgnorePointer(
+                      child: Padding(
+                          padding: EdgeInsets.only(left: 30, right: 30),
+                          child: Center(
+                            child: Text(
+                              '$_other',
+                            ),
+                          )),
+                    ),
+                    IgnorePointer(
+                      child: Padding(
+                          padding: EdgeInsets.only(left: 30, right: 30),
+                          child: Center(
+                            child: Text(
+                              _wordDetails?.synonym ?? '',
+                            ),
+                          )),
                     ),
                   ],
                 ), // This trailing comma makes auto-formatting nicer for build methods.
@@ -645,11 +682,26 @@ class _MyHomePageState extends State<MyHomePage> {
                               }
                             });
                           },
-                          icon: Icon(
-                            Icons.star_border,
-                            size: 26,
-                            color: Colors.amber,
-                          )),
+                          icon: !widget.isDarkness
+                              ? Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: Icon(
+                                        Icons.star,
+                                        size: 27,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Positioned(
+                                        child: Icon(
+                                      Icons.star,
+                                      size: 26,
+                                      color: Colors.amber,
+                                    )),
+                                  ],
+                                )
+                              : Icon(Icons.star_border,
+                                  size: 26, color: Colors.amber)),
                     ],
                   ),
                 ),
@@ -681,6 +733,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 //         }));
                 //       },
                 //     )),
+
+                Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: IconButton(
+                      icon: Icon(Icons.circle_outlined),
+                      onPressed: () {
+                        setState(() {
+                          _showAppbar = !_showAppbar;
+                        });
+                      },
+                    )),
+
                 Navigator.canPop(context)
                     ? Positioned(
                         // top: -50,
