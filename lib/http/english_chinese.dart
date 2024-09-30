@@ -62,8 +62,6 @@ Future<String> getEnglishWordPhonetic(String word) async {
   return ready;
 }
 
-
-
 Future<List<String>> englishSearch(String word) async {
   List<String> ready = [];
 
@@ -95,11 +93,18 @@ Future<List<String>> englishSearch(String word) async {
 Future<WordDetails?> getWordDetails(String word) async {
   final dio = Dio();
   try {
-    final response  = await dio.post("http://47.108.91.180:5000/word?word=$word");
-    Map result  = response.data;
-    WordDetails wd = WordDetails(cet4: nBool(result["cet4"]), cet6: nBool(result["cet6"]),
-        gre: nBool(result["gre"]), ielts: nBool(result["ielts"]), toefl: nBool(result["toefl"]),
-        postgraduate: nBool(result["postgraduate"]), mean: result["mean"], synonym: showSym(result["synonym"]),
+    final response =
+        await dio.post("http://47.108.91.180:5000/word?word=$word");
+    Map result = response.data;
+    WordDetails wd = WordDetails(
+        cet4: nBool(result["cet4"]),
+        cet6: nBool(result["cet6"]),
+        gre: nBool(result["gre"]),
+        ielts: nBool(result["ielts"]),
+        toefl: nBool(result["toefl"]),
+        postgraduate: nBool(result["postgraduate"]),
+        mean: result["mean"],
+        synonym: showSym(result["synonym"]),
         voice: bytesFromBase64(result["voice"]));
     return wd;
   } catch (e) {
@@ -108,15 +113,14 @@ Future<WordDetails?> getWordDetails(String word) async {
   return null;
 }
 
-
-
 Future<List<String>?> getCustomSearch(String word) async {
   final dio = Dio();
   try {
-    final response  = await dio.post("http://47.108.91.180:5000/search?word=$word&type=0");
+    final response =
+        await dio.post("http://47.108.91.180:5000/search?word=$word&type=1");
     List<String> ready = [];
     List<dynamic> results = response.data['results'];
-    results.forEach((element){
+    results.forEach((element) {
       ready.add(element);
     });
     return ready;

@@ -26,6 +26,7 @@ import '../custom_types.dart';
 
 class ClickableQuarterCircle extends StatelessWidget {
   void Function() onClick = () {};
+  Color background = Colors.grey;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -37,18 +38,28 @@ class ClickableQuarterCircle extends StatelessWidget {
         height: 60,
         child: Stack(
           children: [
-            // Positioned.fill(child: Container(color: Colors.red,)),
+            Positioned(
+              child: Container(
+                color: background,
+                width: 11,
+                height: 50,
+              ),
+              left: 0,
+            ),
             Positioned(
                 top: -50,
-                left: -50,
+                left: -40,
                 child: CustomPaint(
-                  painter: QuarterCirclePainter(),
+                  painter: QuarterCirclePainter(background),
                   size: Size(100, 100),
                 )),
             Positioned(
-                top: 5,
-                left: 7,
-                child: Icon(Icons.turn_left)),
+                top: 7,
+                left: 17,
+                child: Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                )),
           ],
         ),
       ),
@@ -57,10 +68,12 @@ class ClickableQuarterCircle extends StatelessWidget {
 }
 
 class QuarterCirclePainter extends CustomPainter {
+  late Color background;
+  QuarterCirclePainter(this.background);
   @override
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint()
-      ..color = Colors.red
+      ..color = background
       ..style = PaintingStyle.fill;
 
     // Adjust the rect to start from the top left corner
@@ -112,6 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
   double _searchBarWidth = 200;
   bool _tapingOnSearchBar = false;
   bool _typingInSearchBar = false;
+  bool _canPop = false;
   List<String> _suggestions = []; //word search
   List _words = [];
   var _word = "";
@@ -291,57 +305,74 @@ class _MyHomePageState extends State<MyHomePage> {
               borderRadius: BorderRadius.circular(20),
             ),
             // 搜索框内的内容
-            child: TextField(
-              controller: _searchController,
-              onChanged: _updateSuggestions,
-              onTap: () {
-                setState(() {
-                  _tapingOnSearchBar = true;
-                  _searchBarWidth = screenWidth;
-                });
-              },
-              onTapOutside: (value) {
-                setState(() {
-                  _tapingOnSearchBar = false;
-                  _searchBarWidth = _searchBarDefaultWidth;
-                });
-              },
-              onSubmitted: (value) {
-                if (value.isNotEmpty) {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return MyHomePage(
-                      isDarkness: widget.isDarkness,
-                      wordList: () {
-                        return [value];
-                      },
-                      startIndex: 0,
-                    );
-                  }));
-                }
-              },
-              decoration: InputDecoration(
-                // 设置搜索框内部的边距
-                contentPadding: EdgeInsets.all(10),
-                // 设置搜索框的图标
-                prefixIcon: Icon(Icons.search),
-                suffixIcon: _suggestions.isNotEmpty
-                    ? IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _suggestions = [];
-                            _tapingOnSearchBar = false;
-                            _searchBarWidth = _searchBarDefaultWidth;
-                          });
-                        },
-                        icon: Icon(Icons.close))
-                    : null,
-                // 设置搜索框的提示文字
-                hintText: '搜索',
-                // 移除搜索框的边框
-                border: InputBorder.none,
-              ),
-            ),
+            child: PopScope(
+                canPop: _canPop,
+                onPopInvoked: (value) {
+                  if (!_canPop) {
+                    setState(() {
+                      _canPop = Navigator.canPop(context);
+                      _searchController.clear();
+                      _suggestions = [];
+                      _tapingOnSearchBar = false;
+                      _searchBarWidth = _searchBarDefaultWidth;
+                    });
+                  }
+                },
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _updateSuggestions,
+                  onTap: () {
+                    setState(() {
+                      _canPop = false;
+                      _tapingOnSearchBar = true;
+                      _searchBarWidth = screenWidth;
+                    });
+                  },
+                  onTapOutside: (value) {
+                    setState(() {
+                      _canPop = Navigator.canPop(context);
+                      _tapingOnSearchBar = false;
+                      _searchBarWidth = _searchBarDefaultWidth;
+                    });
+                  },
+                  onSubmitted: (value) {
+                    if (value.isNotEmpty) {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return MyHomePage(
+                          isDarkness: widget.isDarkness,
+                          wordList: () {
+                            return [value];
+                          },
+                          startIndex: 0,
+                        );
+                      }));
+                    }
+                  },
+                  decoration: InputDecoration(
+                    // 设置搜索框内部的边距
+                    contentPadding: EdgeInsets.all(10),
+                    // 设置搜索框的图标
+                    prefixIcon: Icon(Icons.search),
+                    suffixIcon: _suggestions.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _canPop = Navigator.canPop(context);
+                                _searchController.clear();
+                                _suggestions = [];
+                                _tapingOnSearchBar = false;
+                                _searchBarWidth = _searchBarDefaultWidth;
+                              });
+                            },
+                            icon: Icon(Icons.close))
+                        : null,
+                    // 设置搜索框的提示文字
+                    hintText: '搜索',
+                    // 移除搜索框的边框
+                    border: InputBorder.none,
+                  ),
+                )),
           ),
         ),
         leading: _tapingOnSearchBar ? const SizedBox() : null,
@@ -650,15 +681,20 @@ class _MyHomePageState extends State<MyHomePage> {
                 //         }));
                 //       },
                 //     )),
-                Navigator.canPop(context) ? Positioned(
-                    // top: -50,
-                    //   left: -50,
-                    child: ClickableQuarterCircle()
-                      ..onClick = () {
-                        if (Navigator.canPop(context)){
-                          Navigator.pop(context);
-                        }
-                      }) : const SizedBox(),
+                Navigator.canPop(context)
+                    ? Positioned(
+                        // top: -50,
+                        //   left: -50,
+                        child: ClickableQuarterCircle()
+                          ..background = (widget.isDarkness
+                              ? Colors.red
+                              : Colors.red[200])!
+                          ..onClick = () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+                          })
+                    : const SizedBox(),
               ],
             )
           : ListView.builder(
@@ -876,16 +912,15 @@ class _MyHomePageState extends State<MyHomePage> {
     if (wl.isEmpty) {
       return _words[index];
     }
-    if (wl.isNotEmpty){
-      if ( _wordIndex >= wl.length) {
+    if (wl.isNotEmpty) {
+      if (_wordIndex >= wl.length) {
         index = 0;
         _wordIndex = 0;
       }
-      if ( _wordIndex < 0) {
+      if (_wordIndex < 0) {
         index = wl.length - 1;
         _wordIndex = wl.length - 1;
       }
-
     }
 
     saveNewWord(wl[index]);
@@ -909,6 +944,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void refreshWord() {
     print("需要刷新当前单词的时间 => ${DateTime.now()}");
+    _voice = null;
     _word = pickWord(_wordIndex);
 
     getEnglishWordPhonetic(_word).then((onValue) {
