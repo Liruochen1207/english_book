@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:english_book/cache.dart';
 import 'package:english_book/http/english_chinese.dart';
+import 'package:english_book/page/collect.dart';
 import 'package:english_book/page/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -32,7 +34,7 @@ class _ConversationPageState extends State<ConversationPage> {
     // });
   }
 
-  List<dynamic> showWord()  {
+  List<dynamic> showWord() {
     Future.delayed(Duration.zero);
     return [text];
   }
@@ -49,7 +51,10 @@ class _ConversationPageState extends State<ConversationPage> {
               '请为${Platform.operatingSystem}设备输出平均字体大小偏$avengeSize的严格markdown格式文本'
         },
         {'role': 'system', 'content': '每一个你给的英文句子需要翻译成中文写在它下面'},
-        {'role': 'system', 'content': '你需要为用户提供形近词、同义替换词、反义词、单词造句、语境说明、英英牛津该词原文'},
+        {
+          'role': 'system',
+          'content': '你需要为用户提供形近词、同义替换词、反义词、单词造句、语境说明、英英牛津该词原文'
+        },
         {'role': 'user', 'content': widget.word}
       ]
     };
@@ -88,6 +93,39 @@ class _ConversationPageState extends State<ConversationPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('AI解释:${widget.word}'),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return CollectPage(
+                    word: conversationText,
+                  );
+                })).then((onValue) {
+                  if (!Navigator.canPop(context)) {
+                    CustomCache.waitForAdd.clearAll();
+                  }
+                });
+              },
+              icon: !widget.isDarkness
+                  ? Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Icon(
+                            Icons.star,
+                            size: 27,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Positioned(
+                            child: Icon(
+                          Icons.star,
+                          size: 26,
+                          color: Colors.amber,
+                        )),
+                      ],
+                    )
+                  : Icon(Icons.star_border, size: 26, color: Colors.amber)),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -97,7 +135,10 @@ class _ConversationPageState extends State<ConversationPage> {
             this.text = text ?? "";
             Navigator.push(context, MaterialPageRoute(builder: (context) {
               return MyHomePage(
-                  isDarkness: widget.isDarkness, wordList: showWord, startIndex: 0,);
+                isDarkness: widget.isDarkness,
+                wordList: showWord,
+                startIndex: 0,
+              );
             }));
           },
           data: conversationText,

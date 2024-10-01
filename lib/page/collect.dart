@@ -130,7 +130,7 @@ class SectionCard extends StatefulWidget {
 
 class _SectionCardState extends State<SectionCard> {
   Future<void> safetyQuit() async {
-    await widget.fatherWidgetState.refreshListeningList(widget.title);
+    await widget.fatherWidgetState.refreshListeningList(widget.title); //存入单词
     Navigator.pop(context);
   }
 

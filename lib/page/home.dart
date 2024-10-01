@@ -19,6 +19,7 @@ import 'package:english_book/http/word.dart';
 
 import 'package:english_book/http/english_chinese.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 // import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,7 +43,7 @@ class ClickableQuarterCircle extends StatelessWidget {
             Positioned(
               child: Container(
                 color: background,
-                width: 11,
+                width: 10,
                 height: 50,
               ),
               left: 0,
@@ -122,8 +123,6 @@ class _MyHomePageState extends State<MyHomePage> {
   int _wordIndex = 0;
   int _delta = 0;
   final int _speechType = 2;
-  double _searchBarDefaultWidth = 200;
-  double _searchBarWidth = 200;
   bool _tapingOnSearchBar = false;
   bool _typingInSearchBar = false;
   bool _canPop = false;
@@ -154,6 +153,9 @@ class _MyHomePageState extends State<MyHomePage> {
   ListenerRegisterHandler registerHandler = ListenerRegisterHandler();
   List<EventRegisterHandler> eventHandlerList = [];
   FocusNode backgroundFocus = FocusNode();
+
+  ScrollController _longWordScrollController = ScrollController();
+  ScrollController _longExplainScrollController = ScrollController();
 
   final Future<SharedPreferencesWithCache> _prefs =
       SharedPreferencesWithCache.create(
@@ -280,6 +282,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Text ExamTypeText(String msg) {
+    return Text(
+      msg + "  ",
+      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -298,7 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
       key: _scaffoldKey,
       appBar: _showAppbar
           ? AppBar(
-              toolbarHeight: 70,
+              toolbarHeight: screenHeight * 1 / 12,
               backgroundColor: widget.isDarkness
                   ? Color.fromARGB(255, 82, 46, 145)
                   : Colors.amber,
@@ -306,7 +315,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 // 使用TextField作为搜索框
                 child: Container(
                   // 设置搜索框的宽度
-                  width: _searchBarWidth,
+                  width: screenWidth * 1 / 1.7,
                   // 使用装饰器来给搜索框添加边框
                   decoration: BoxDecoration(
                     color: _tapingOnSearchBar
@@ -324,7 +333,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             _searchController.clear();
                             _suggestions = [];
                             _tapingOnSearchBar = false;
-                            _searchBarWidth = _searchBarDefaultWidth;
                             backgroundFocus.requestFocus();
                           });
                         }
@@ -336,14 +344,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           setState(() {
                             _canPop = false;
                             _tapingOnSearchBar = true;
-                            _searchBarWidth = _searchBarDefaultWidth;
                           });
                         },
                         onTapOutside: (value) {
                           setState(() {
                             _canPop = Navigator.canPop(context);
                             _tapingOnSearchBar = false;
-                            _searchBarWidth = _searchBarDefaultWidth;
                           });
                         },
                         onSubmitted: (value) {
@@ -373,7 +379,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                       _searchController.clear();
                                       _suggestions = [];
                                       _tapingOnSearchBar = false;
-                                      _searchBarWidth = _searchBarDefaultWidth;
                                     });
                                   },
                                   icon: Icon(Icons.close))
@@ -550,24 +555,62 @@ class _MyHomePageState extends State<MyHomePage> {
                         isLongWord
                             ? Padding(
                                 padding: EdgeInsets.only(
-                                    left: 24, right: 30, bottom: 20),
+                                    top: _showAppbar ? 50 : 120,
+                                    left: 24,
+                                    right: 30,
+                                    bottom: _showAppbar ? 0 : 100),
                                 child: Container(
                                   alignment: Alignment.center,
                                   child: Scrollbar(
                                     thumbVisibility: true,
                                     child: SingleChildScrollView(
+                                      controller: _longWordScrollController
+                                        ..addListener(() {
+                                          setState(() {
+                                            _longExplainScrollController
+                                                .position
+                                                .moveTo(
+                                                    _longWordScrollController
+                                                        .offset);
+                                          });
+                                        }),
                                       child: Padding(
                                         padding: EdgeInsets.only(right: 16),
-                                        child: Text(
-                                          '$_word',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20),
+                                        child: MarkdownBody(
+                                          selectable: true,
+                                          onSelectionChanged:
+                                              (text, selection, cause) {
+                                            if (text != _word) {
+                                              Navigator.push(context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) {
+                                                return MyHomePage(
+                                                  isDarkness: widget.isDarkness,
+                                                  wordList: () {
+                                                    return [text];
+                                                  },
+                                                  startIndex: 0,
+                                                );
+                                              }));
+                                            }
+                                          },
+                                          data: _word.contains("#")
+                                              ? _word
+                                              : "# " + _word,
                                         ),
                                       ),
                                     ),
                                   ),
-                                  height: 200,
+                                  height: _showAppbar
+                                      ? 300
+                                      : screenHeight * 1 / 1.29,
+                                ),
+                              )
+                            : const SizedBox(),
+                        isLongWord && !_showAppbar
+                            ? const IgnorePointer(
+                                child: SizedBox(
+                                  height: 100,
                                 ),
                               )
                             : const SizedBox(),
@@ -641,21 +684,27 @@ class _MyHomePageState extends State<MyHomePage> {
                     Column(
                       children: [
                         IgnorePointer(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 30, right: 30),
-                            child: Center(
-                              child: Text(
-                                '$_explain',
-                              ),
-                            ),
-                          ),
+                          ignoring: !isLongWord,
+                          child: SingleChildScrollView(
+                              controller: _longExplainScrollController,
+                              child: Container(
+                                // height: isLongWord ? screenHeight - 420 : null,
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 30, right: 30),
+                                  child: Center(
+                                    child: Text(
+                                      '$_explain',
+                                    ),
+                                  ),
+                                ),
+                              )),
                         ),
                       ],
                     ),
                     isLongWord
                         ? const IgnorePointer(
                             child: SizedBox(
-                              height: 200,
+                              height: 20,
                             ),
                           )
                         : const SizedBox(),
@@ -668,6 +717,30 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           )),
                     ),
+                    !isLongWord
+                        ? Padding(
+                            padding: EdgeInsets.only(left: 30, right: 30),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                ExamTypeText(
+                                    (_wordDetails!.ielts) ?? false ? "雅思" : ""),
+                                ExamTypeText(
+                                    (_wordDetails!.toefl) ?? false ? "托福" : ""),
+                                ExamTypeText(
+                                    (_wordDetails!.postgraduate) ?? false
+                                        ? "考研"
+                                        : ""),
+                                ExamTypeText(
+                                    (_wordDetails!.gre) ?? false ? "GRE" : ""),
+                                ExamTypeText(
+                                    (_wordDetails!.cet4) ?? false ? "四级" : ""),
+                                ExamTypeText(
+                                    (_wordDetails!.cet6) ?? false ? "六级" : ""),
+                              ],
+                            ),
+                          )
+                        : const SizedBox(),
                     IgnorePointer(
                       child: Padding(
                           padding: EdgeInsets.only(left: 30, right: 30),
@@ -677,13 +750,16 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           )),
                     ),
+                    const SizedBox(
+                      height: 7,
+                    ),
                   ],
                 ), // This trailing comma makes auto-formatting nicer for build methods.
                 Positioned(
                   top: _showAppbar ? 0 : null,
                   right: _showAppbar ? 0 : null,
-                  bottom: _showAppbar ? null : 0,
-                  left: _showAppbar ? null : 0,
+                  left: _showAppbar ? null : 20,
+                  bottom: _showAppbar ? null : 20,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -731,6 +807,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                 ),
+
                 // Positioned(
                 //     bottom: 40,
                 //     right: 40,
@@ -759,12 +836,45 @@ class _MyHomePageState extends State<MyHomePage> {
                 //         }));
                 //       },
                 //     )),
+                // Positioned(
+                //   bottom: 20,
+                //   left: 1,
+                //   right: 1,
+                //   child: !isLongWord
+                //       ? Padding(
+                //           padding: EdgeInsets.only(left: 30, right: 30),
+                //           child: Row(
+                //             mainAxisAlignment: MainAxisAlignment.center,
+                //             children: [
+                //               ExamTypeText(
+                //                   (_wordDetails!.ielts) ?? false ? "雅思" : ""),
+                //               ExamTypeText(
+                //                   (_wordDetails!.toefl) ?? false ? "托福" : ""),
+                //               ExamTypeText((_wordDetails!.postgraduate) ?? false
+                //                   ? "考研"
+                //                   : ""),
+                //               ExamTypeText(
+                //                   (_wordDetails!.gre) ?? false ? "GRE" : ""),
+                //               ExamTypeText(
+                //                   (_wordDetails!.cet4) ?? false ? "四级" : ""),
+                //               ExamTypeText(
+                //                   (_wordDetails!.cet6) ?? false ? "六级" : ""),
+                //             ],
+                //           ),
+                //         )
+                //       : const SizedBox(),
+                // ),
 
                 Positioned(
                     bottom: 10,
                     right: 10,
                     child: IconButton(
-                      icon: Icon(Icons.circle_outlined),
+                      icon: Icon(
+                        Icons.circle_outlined,
+                        color: widget.isDarkness && !_showAppbar
+                            ? const Color.fromARGB(255, 95, 94, 94)
+                            : null,
+                      ),
                       onPressed: () {
                         setState(() {
                           _showAppbar = !_showAppbar;
@@ -774,13 +884,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 !_isTheRoot
                     ? Positioned(
-                        top: _showAppbar ? 0 : null,
-                        left: _showAppbar ? 0 : null,
-                        bottom: _showAppbar ? null : 0,
-                        right: _showAppbar ? null : 0,
+                        // top: -50,
+                        top: !_showAppbar ? 40 : null,
                         child: ClickableQuarterCircle()
                           ..background = (widget.isDarkness
-                              ? Colors.red
+                              ? Colors.red.withOpacity(_showAppbar ? 1 : 0.4)
                               : Colors.red[200])!
                           ..onClick = () {
                             if (Navigator.canPop(context)) {
