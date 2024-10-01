@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:english_book/page/about.dart';
 import 'package:english_book/page/collect.dart';
 import 'package:english_book/page/conversation.dart';
 import 'package:english_book/page/exam.dart';
@@ -145,6 +146,8 @@ class _MyHomePageState extends State<MyHomePage> {
   double textProportion = 15.6;
 
   bool _showAppbar = true;
+
+  bool _isTheRoot = false;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -307,7 +310,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   // 使用装饰器来给搜索框添加边框
                   decoration: BoxDecoration(
                     color: _tapingOnSearchBar
-                        ? Colors.white24
+                        ? (widget.isDarkness ? Colors.black12 : Colors.white24)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -428,6 +431,7 @@ class _MyHomePageState extends State<MyHomePage> {
             )
           : null,
       drawer: Drawer(
+        width: double.infinity,
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
@@ -476,6 +480,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 gatePortal();
               },
             ),
+            Divider(),
+            _isTheRoot
+                ? ListTile(
+                    title: Text('关于'),
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return AboutPage();
+                      }));
+                    },
+                  )
+                : const SizedBox(),
           ],
         ),
       ),
@@ -518,10 +534,16 @@ class _MyHomePageState extends State<MyHomePage> {
                             : Padding(
                                 padding: EdgeInsets.only(left: 0, bottom: 40),
                                 child: Center(
-                                  child: Text(
-                                    '$_word',
-                                    style: TextStyle(
-                                        fontSize: Platform.isAndroid ? 32 : 35),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      speechWord(_speechType);
+                                    },
+                                    child: Text(
+                                      '$_word',
+                                      style: TextStyle(
+                                          fontSize:
+                                              Platform.isAndroid ? 32 : 35),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -658,6 +680,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ), // This trailing comma makes auto-formatting nicer for build methods.
                 Positioned(
+                  top: _showAppbar ? 0 : null,
+                  right: _showAppbar ? 0 : null,
+                  bottom: _showAppbar ? null : 0,
+                  left: _showAppbar ? null : 0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -746,10 +772,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                     )),
 
-                Navigator.canPop(context)
+                !_isTheRoot
                     ? Positioned(
-                        // top: -50,
-                        //   left: -50,
+                        top: _showAppbar ? 0 : null,
+                        left: _showAppbar ? 0 : null,
+                        bottom: _showAppbar ? null : 0,
+                        right: _showAppbar ? null : 0,
                         child: ClickableQuarterCircle()
                           ..background = (widget.isDarkness
                               ? Colors.red
@@ -871,7 +899,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // refreshWord();
     // Create the audio player.
     player = AudioPlayer();
-
+    _isTheRoot = !Navigator.canPop(context);
     // Set the release mode to keep the source after playback has completed.
     player.setReleaseMode(ReleaseMode.stop);
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.arrowLeft)
@@ -947,7 +975,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     registerHandler.addListener(
         ListenerType.onPointerUp, NoteButtonAction.leftButton, (event) {
-      if (_delta.abs() > 7) {
+      if (_delta.abs() > screenWidth / 6.7) {
         if (_delta < 0) {
           print("page -");
           pageDown();
@@ -955,7 +983,7 @@ class _MyHomePageState extends State<MyHomePage> {
           print("page +");
           pageUp();
         }
-      } else {
+      } else if (_delta.abs() <= 0.22) {
         if (event.position.dx > (screenWidth - (screenWidth / 3))) {
           pageUp();
         } else if (event.position.dx <= screenWidth / 3) {
