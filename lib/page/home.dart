@@ -377,8 +377,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ? AppBar(
               toolbarHeight: screenHeight * 1 / 12,
               backgroundColor: widget.isDarkness
-                  ? Color.fromARGB(255, 0, 91, 151)
-                  : Colors.amber,
+                  ? Color.fromARGB(255, 21, 70, 119)
+                  : Color.fromARGB(255, 81, 213, 173),
               title: Center(
                 // 使用TextField作为搜索框
                 child: Container(
