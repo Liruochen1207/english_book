@@ -117,7 +117,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late AudioPlayer player = AudioPlayer();
+  AudioPlayer? player;
   var client = SqlClient();
 
   int _wordIndex = 0;
@@ -282,11 +282,78 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Text ExamTypeText(String msg) {
-    return Text(
-      msg + "  ",
-      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+  Widget ExamTypeText(String msg) {
+    return Row(
+      children: [
+        Text(
+          msg,
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+        ),
+        const SizedBox(
+          width: 5,
+        ),
+      ],
     );
+  }
+
+  Widget ExamTypeIeltsText() {
+    var wd = _wordDetails;
+    if (wd != null) {
+      if (wd.ielts ?? false) {
+        return ExamTypeText("雅思");
+      }
+    }
+    return const SizedBox();
+  }
+
+  Widget ExamTypeToeflText() {
+    var wd = _wordDetails;
+    if (wd != null) {
+      if (wd.toefl ?? false) {
+        return ExamTypeText("托福");
+      }
+    }
+    return const SizedBox();
+  }
+
+  Widget ExamTypePostgraduateText() {
+    var wd = _wordDetails;
+    if (wd != null) {
+      if (wd.postgraduate ?? false) {
+        return ExamTypeText("考研");
+      }
+    }
+    return const SizedBox();
+  }
+
+  Widget ExamTypeGREText() {
+    var wd = _wordDetails;
+    if (wd != null) {
+      if (wd.gre ?? false) {
+        return ExamTypeText("GRE");
+      }
+    }
+    return const SizedBox();
+  }
+
+  Widget ExamTypeCET4Text() {
+    var wd = _wordDetails;
+    if (wd != null) {
+      if (wd.cet4 ?? false) {
+        return ExamTypeText("四级");
+      }
+    }
+    return const SizedBox();
+  }
+
+  Widget ExamTypeCET6Text() {
+    var wd = _wordDetails;
+    if (wd != null) {
+      if (wd.cet6 ?? false) {
+        return ExamTypeText("六级");
+      }
+    }
+    return const SizedBox();
   }
 
   @override
@@ -305,7 +372,8 @@ class _MyHomePageState extends State<MyHomePage> {
     bool isLongWord = _word.contains(" ") || _word.length > 14;
     return Scaffold(
       key: _scaffoldKey,
-      appBar: _showAppbar
+      appBar: _showAppbar &&
+              MediaQuery.of(context).orientation == Orientation.portrait
           ? AppBar(
               toolbarHeight: screenHeight * 1 / 12,
               backgroundColor: widget.isDarkness
@@ -371,7 +439,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           contentPadding: EdgeInsets.all(10),
                           // 设置搜索框的图标
                           prefixIcon: Icon(Icons.search),
-                          suffixIcon: _suggestions.isNotEmpty
+                          suffixIcon: _suggestions.isNotEmpty ||
+                                  _searchController.text.isNotEmpty
                               ? IconButton(
                                   onPressed: () {
                                     setState(() {
@@ -575,7 +644,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                           });
                                         }),
                                       child: Padding(
-                                        padding: EdgeInsets.only(right: 16),
+                                        padding: EdgeInsets.only(
+                                            left: 30, right: 30),
                                         child: MarkdownBody(
                                           selectable: true,
                                           onSelectionChanged:
@@ -596,7 +666,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           },
                                           data: _word.contains("#")
                                               ? _word
-                                              : "# " + _word,
+                                              : "## " + _word,
                                         ),
                                       ),
                                     ),
@@ -721,22 +791,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         ? Padding(
                             padding: EdgeInsets.only(left: 30, right: 30),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                ExamTypeText(
-                                    (_wordDetails!.ielts) ?? false ? "雅思" : ""),
-                                ExamTypeText(
-                                    (_wordDetails!.toefl) ?? false ? "托福" : ""),
-                                ExamTypeText(
-                                    (_wordDetails!.postgraduate) ?? false
-                                        ? "考研"
-                                        : ""),
-                                ExamTypeText(
-                                    (_wordDetails!.gre) ?? false ? "GRE" : ""),
-                                ExamTypeText(
-                                    (_wordDetails!.cet4) ?? false ? "四级" : ""),
-                                ExamTypeText(
-                                    (_wordDetails!.cet6) ?? false ? "六级" : ""),
+                                ExamTypeIeltsText(),
+                                ExamTypeToeflText(),
+                                ExamTypePostgraduateText(),
+                                ExamTypeGREText(),
+                                ExamTypeCET4Text(),
+                                ExamTypeCET6Text(),
                               ],
                             ),
                           )
@@ -756,10 +818,26 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ), // This trailing comma makes auto-formatting nicer for build methods.
                 Positioned(
-                  top: _showAppbar ? 0 : null,
-                  right: _showAppbar ? 0 : null,
-                  left: _showAppbar ? null : 20,
-                  bottom: _showAppbar ? null : 20,
+                  top: _showAppbar &&
+                          MediaQuery.of(context).orientation ==
+                              Orientation.portrait
+                      ? 0
+                      : null,
+                  right: _showAppbar &&
+                          MediaQuery.of(context).orientation ==
+                              Orientation.portrait
+                      ? 0
+                      : null,
+                  left: _showAppbar &&
+                          MediaQuery.of(context).orientation ==
+                              Orientation.portrait
+                      ? null
+                      : 20,
+                  bottom: _showAppbar &&
+                          MediaQuery.of(context).orientation ==
+                              Orientation.portrait
+                      ? null
+                      : 20,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -794,12 +872,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                         color: Colors.black,
                                       ),
                                     ),
-                                    Positioned(
-                                        child: Icon(
-                                      Icons.star,
-                                      size: 26,
-                                      color: Colors.amber,
-                                    )),
+                                    // Positioned(
+                                    //     child: Icon(
+                                    //   Icons.star,
+                                    //   size: 26,
+                                    //   color: Colors.amber,
+                                    // )),
                                   ],
                                 )
                               : Icon(Icons.star_border,
@@ -885,11 +963,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 !_isTheRoot
                     ? Positioned(
                         // top: -50,
-                        top: !_showAppbar ? 40 : null,
+                        top: !_showAppbar &&
+                                MediaQuery.of(context).orientation ==
+                                    Orientation.portrait
+                            ? 40
+                            : null,
                         child: ClickableQuarterCircle()
                           ..background = (widget.isDarkness
                               ? Colors.red.withOpacity(_showAppbar ? 1 : 0.4)
-                              : Colors.red[200])!
+                              : const Color.fromARGB(255, 239, 154, 154)
+                                  .withOpacity(_showAppbar ? 1 : 0.4))!
                           ..onClick = () {
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);
@@ -942,7 +1025,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     // Release all sources and dispose the player.
-    player.dispose();
+    player?.dispose();
     backgroundFocus.unfocus();
     backgroundFocus.dispose();
     super.dispose();
@@ -1006,10 +1089,8 @@ class _MyHomePageState extends State<MyHomePage> {
     // }
     // refreshWord();
     // Create the audio player.
-    player = AudioPlayer();
     _isTheRoot = !Navigator.canPop(context);
     // Set the release mode to keep the source after playback has completed.
-    player.setReleaseMode(ReleaseMode.stop);
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.arrowLeft)
       ..setOnlyKeyUpAlive()
       ..setHandler(() {
@@ -1024,7 +1105,7 @@ class _MyHomePageState extends State<MyHomePage> {
         pageUp();
       }));
 
-    player.setReleaseMode(ReleaseMode.stop);
+    player?.setReleaseMode(ReleaseMode.stop);
     eventHandlerList.add(EventRegisterHandler(LogicalKeyboardKey.pageUp)
       ..setHandler(() {
         print("LEFT");
@@ -1137,10 +1218,17 @@ class _MyHomePageState extends State<MyHomePage> {
         _voice = onValue;
       });
     }
-    player = AudioPlayer();
-    player.setReleaseMode(ReleaseMode.stop);
-    player.setSource(BytesSource(_voice!));
-    player.resume();
+    player ??= AudioPlayer();
+    player?.setReleaseMode(ReleaseMode.release);
+    player?.setSource(BytesSource(_voice!));
+
+    var currentPos = await player?.getCurrentPosition();
+    var dPos = await player?.getDuration();
+    if (currentPos == dPos) {
+      player?.resume();
+    } else if (currentPos == Duration.zero) {
+      player?.play(BytesSource(_voice!));
+    }
   }
 
   void refreshWord() {

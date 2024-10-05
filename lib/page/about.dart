@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 final Uri _power_url = Uri.parse('https://flutter.dev');
-final Uri _bili_url = Uri.parse('https://space.bilibili.com/178065252');
 
 class AboutPage extends StatefulWidget {
   static String version = "";
@@ -15,12 +14,6 @@ class AboutPage extends StatefulWidget {
 }
 
 class _AboutPageState extends State<AboutPage> {
-  Future<void> _openBili() async {
-    if (!await launchUrl(_bili_url)) {
-      throw Exception('Could not launch $_bili_url');
-    }
-  }
-
   Future<void> _openPower() async {
     if (!await launchUrl(_power_url)) {
       throw Exception('Could not launch $_power_url');
@@ -64,7 +57,7 @@ class _AboutPageState extends State<AboutPage> {
                       height:
                           20.0), // Adds some space between the image and text
                   Text(
-                    'Archer Lee',
+                    'Archer',
                     style: TextStyle(
                       color: Colors.blue,
                       fontSize: 24.0,
@@ -73,9 +66,7 @@ class _AboutPageState extends State<AboutPage> {
                   ),
                 ],
               ),
-              onTap: () {
-                _openBili();
-              },
+              onTap: () {},
             ),
 
             SizedBox(
@@ -85,7 +76,6 @@ class _AboutPageState extends State<AboutPage> {
               'Version: ${AboutPage.version}',
               style: TextStyle(
                 fontSize: 24.0,
-                fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 10.0),
