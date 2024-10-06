@@ -10,6 +10,8 @@ import 'package:english_book/page/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
+import '../theme/color.dart';
+
 class ConversationPage extends StatefulWidget {
   String word;
   bool isDarkness;
@@ -90,6 +92,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
   @override
   Widget build(BuildContext context) {
+    var autoColor = AutoColor(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('AI解释:${widget.word}'),
@@ -106,25 +109,10 @@ class _ConversationPageState extends State<ConversationPage> {
                   }
                 });
               },
-              icon: !widget.isDarkness
-                  ? Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Icon(
-                            Icons.star,
-                            size: 27,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Positioned(
-                            child: Icon(
-                          Icons.star,
-                          size: 26,
-                          color: Colors.amber,
-                        )),
-                      ],
-                    )
-                  : Icon(Icons.star_border, size: 26, color: Colors.amber)),
+              icon: Icon(Icons.star_border,
+                  size: 26,
+                  color: Colors.amber.withOpacity(
+                      autoColor.getIsDarkness() ? 0.6 : 1.0))),
         ],
       ),
       body: SingleChildScrollView(

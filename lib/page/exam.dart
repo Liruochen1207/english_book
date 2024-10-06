@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/services.dart';
 
+import '../theme/color.dart';
+
 class LetterCard extends StatefulWidget {
   late String letter;
   late double width;
   late List<void Function()> refresh = [];
 
-  bool isDarkness;
   LetterCard(
       {super.key,
-      required this.isDarkness,
       required this.letter,
       required this.width});
 
@@ -40,6 +40,7 @@ class _LetterCardState extends State<LetterCard> {
 
   @override
   Widget build(BuildContext context) {
+    var autoColor = AutoColor(context);
     // TODO: implement build
     double letterWidth = widget.width;
     return Padding(
@@ -47,9 +48,7 @@ class _LetterCardState extends State<LetterCard> {
       child: Container(
         width: letterWidth,
         height: letterWidth,
-        color: widget.isDarkness
-            ? Color.fromARGB(173, 105, 43, 116)
-            : Color.fromARGB(121, 235, 219, 99),
+        color: autoColor.backgroundColor(),
         child: Text(
           widget.letter,
           style: TextStyle(fontSize: letterWidth / 1.5),
@@ -62,12 +61,10 @@ class _LetterCardState extends State<LetterCard> {
 class Exam extends StatefulWidget {
   late String word;
   late Uint8List? voice;
-  bool isDarkness;
   Exam(
       {super.key,
       required this.word,
-      required this.voice,
-      required this.isDarkness});
+      required this.voice});
 
   @override
   _ExamState createState() => _ExamState();
@@ -124,7 +121,6 @@ class _ExamState extends State<Exam> {
         letterList.add(LetterCard(
           letter: "",
           width: letterWidth,
-          isDarkness: widget.isDarkness,
         ));
       }
       setState(() {});
@@ -268,8 +264,15 @@ class _ExamState extends State<Exam> {
     super.dispose();
   }
 
+
+
   @override
   Widget build(BuildContext context) {
+    var autoColor = AutoColor(context);
+    Text label(String data){
+      return Text(data, style: TextStyle(color: autoColor.labelColor()),);
+    }
+
     // FocusScope.of(context).requestFocus(backgroundFocus);
     return Scaffold(
       appBar: AppBar(
@@ -295,17 +298,17 @@ class _ExamState extends State<Exam> {
                       onPressed: () {
                         cleanUp();
                       },
-                      child: Text('清空')),
+                      child: label('清空')),
                   cupertino.CupertinoButton(
                       onPressed: () {
                         confirm();
                       },
-                      child: Text('提交')),
+                      child: label('提交')),
                   cupertino.CupertinoButton(
                       onPressed: () {
                         doPlaying();
                       },
-                      child: Text('发音')),
+                      child: label('发音')),
                   IconButton(
                       onPressed: () {
                         if (listPointer - 1 >= 0) {
@@ -314,7 +317,7 @@ class _ExamState extends State<Exam> {
                           listPointer -= 1;
                         }
                       },
-                      icon: Icon(Icons.backspace)),
+                      icon: Icon(Icons.backspace, color: autoColor.labelColor(),)),
                 ],
               ),
             ],

@@ -2,10 +2,36 @@ import 'package:english_book/page/home.dart';
 import 'package:english_book/sql/client.dart';
 import 'package:english_book/http/word.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+Future<bool> requestInstallPermission() async {
+  // 检查安装未知应用的权限
+  var status = await Permission.requestInstallPackages.status;
+  if (!status.isGranted) {
+    // 请求权限
+    status = await Permission.requestInstallPackages.request();
+    return status.isGranted;
+  }
+  return true;
+}
+
+Future<bool> requestStoragePermission() async {
+  // 检查存储权限
+  var status = await Permission.storage.status;
+  if (!status.isGranted) {
+    // 请求权限
+    status = await Permission.storage.request();
+    return status.isGranted;
+  }
+  return true;
+}
+
 
 var client = SqlClient();
 void main() {
   runApp(const MyApp());
+  requestInstallPermission();
+  requestStoragePermission();
 }
 
 class MyApp extends StatelessWidget {
@@ -37,7 +63,7 @@ class MyApp extends StatelessWidget {
               // This works for code too, not just values: Most code changes can be
               // tested with just a hot reload.
 
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
+              // colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
               useMaterial3: true,
             ),
       home: MyHomePage(

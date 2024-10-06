@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cache.dart';
+import '../theme/color.dart';
 
 class TitleTransformer {
   static String encode(String title, List<dynamic> wordList) {
@@ -316,6 +317,7 @@ class _ListenEntranceState extends State<ListenEntrance> {
 
   @override
   Widget build(BuildContext context) {
+    var autoColor = AutoColor(context);
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
@@ -331,6 +333,7 @@ class _ListenEntranceState extends State<ListenEntrance> {
       floatingActionButton: Transform.translate(
         offset: Offset(-20, -20),
         child: FloatingActionButton(
+          backgroundColor: autoColor.primaryColor(),
           onPressed: () {
             setState(() {
               addLisCard();

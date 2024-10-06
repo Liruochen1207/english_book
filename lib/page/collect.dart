@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cache.dart';
+import '../theme/color.dart';
 import 'listen.dart';
 
 class CollectPage extends StatefulWidget {
@@ -88,6 +89,7 @@ class _CollectPageState extends State<CollectPage> {
 
   @override
   Widget build(BuildContext context) {
+    var autoColor = AutoColor(context);
     return Scaffold(
       appBar: AppBar(
         title: Text("点击一个存入"),
@@ -101,6 +103,7 @@ class _CollectPageState extends State<CollectPage> {
       floatingActionButton: Transform.translate(
         offset: Offset(-20, -20),
         child: FloatingActionButton(
+          backgroundColor: autoColor.primaryColor(),
           onPressed: () {
             setState(() {
               addSectionCard();

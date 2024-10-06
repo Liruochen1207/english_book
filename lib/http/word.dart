@@ -5,7 +5,6 @@ import 'package:mysql_client/mysql_client.dart';
 
 import 'package:dio/dio.dart';
 
-
 Future<dynamic> dioGet(String url, [query]) async {
   final dio = Dio();
   final response = await dio.get(url, queryParameters: query);
@@ -17,6 +16,7 @@ Future<dynamic> dioPost(String url, [query]) async {
   final response = await dio.post(url, queryParameters: query);
   return response.data; // 打印存储的字符串
 }
+
 Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
     String word, String mean) async {
   if (tableIndex == -1) {
@@ -35,16 +35,17 @@ Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
 }
 
 Future<void> submitOthers(String word, String other) async {
-  if (generateAlphabet().contains(word[0])){
+  if (generateAlphabet().contains(word[0])) {
     if (other != "") {
       var result = await dioPost("http://47.108.91.180:5000/update_other", {
-        "word" : word,
-        "other" : other,
+        "word": word,
+        "other": other,
       });
       print(result);
     }
   }
 }
+
 
 
 // Future<void> submitVoice(MySQLConnection? connection, int tableIndex,
@@ -67,42 +68,40 @@ Future<void> submitOthers(String word, String other) async {
 
 Future<List<dynamic>> getWords(String letter) async {
   var data = await dioPost("http://47.108.91.180:5000/table", {
-    "letter" : letter,
+    "letter": letter,
   });
-  if (data.containsKey('words')){
+  if (data.containsKey('words')) {
     return data['words'];
   }
   return [];
 }
 
-
 Future<bool> getWordExist(String word) async {
   var data = await dioPost("http://47.108.91.180:5000/exist", {
-    "word" : word,
+    "word": word,
   });
-  if (data.containsKey('exist')){
-    print(data['exist']==true);
-    return data['exist']==true;
+  if (data.containsKey('exist')) {
+    print(data['exist'] == true);
+    return data['exist'] == true;
   }
 
   return false;
 }
 
 Future<void> saveNewWord(String word) async {
-  if (generateAlphabet().contains(word[0])){
-    getWordExist(word).then((value){
+  if (generateAlphabet().contains(word[0])) {
+    getWordExist(word).then((value) {
       print(word);
       print("EXIST $value");
-      if (!value && !word.contains(" ")){
+      if (!value && !word.contains(" ")) {
         dioPost("http://47.108.91.180:5000/new_word", {
-          "word" : word,
-        }).then((onValue){
+          "word": word,
+        }).then((onValue) {
           print(onValue);
         });
       }
     });
   }
-
 }
 
 String generateAlphabet() {
@@ -139,4 +138,3 @@ String generateAlphabet() {
 //
 //   return readyReturns;
 // }
-

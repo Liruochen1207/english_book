@@ -20,11 +20,15 @@ import 'package:english_book/http/word.dart';
 import 'package:english_book/http/english_chinese.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:path_provider/path_provider.dart';
 // import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../apk.dart';
 import '../cache.dart';
 import '../custom_types.dart';
+import '../path.dart';
+import '../theme/color.dart';
 
 class ClickableQuarterCircle extends StatelessWidget {
   void Function() onClick = () {};
@@ -132,6 +136,8 @@ class _MyHomePageState extends State<MyHomePage> {
   var _phonetic = "";
   var _explain = "";
   var _other = "";
+  var _downloadMsg = "";
+  bool _isDownloading = false;
   WordDetails? _wordDetails;
   Uint8List? _voice;
   int _tableIndex = 0;
@@ -239,7 +245,6 @@ class _MyHomePageState extends State<MyHomePage> {
         return Exam(
           word: _word,
           voice: _voice,
-          isDarkness: widget.isDarkness,
         );
       })).then((value) {
         print("VALUE => ${value.runtimeType}");
@@ -364,6 +369,8 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    var autoColor = AutoColor(context);
+    Color textColor = autoColor.textColor();
     try {
       if (!Platform.isAndroid) {
         isOverflowing = wordScrollController.position.maxScrollExtent > 0;
@@ -375,10 +382,11 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: _showAppbar &&
               MediaQuery.of(context).orientation == Orientation.portrait
           ? AppBar(
+              iconTheme: IconThemeData(
+                color: textColor, // 设置leading图标颜色
+              ),
               toolbarHeight: screenHeight * 1 / 12,
-              backgroundColor: widget.isDarkness
-                  ? Colors.deepPurple
-                  : Colors.amber,
+              backgroundColor: autoColor.primaryColor(),
               title: Center(
                 // 使用TextField作为搜索框
                 child: Container(
@@ -406,6 +414,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       },
                       child: TextField(
+                        cursorColor: textColor,
+                        style: TextStyle(
+                          color: textColor,
+                        ),
                         controller: _searchController,
                         onChanged: _updateSuggestions,
                         onTap: () {
@@ -435,10 +447,15 @@ class _MyHomePageState extends State<MyHomePage> {
                           }
                         },
                         decoration: InputDecoration(
-                          // 设置搜索框内部的边距
+                          hintStyle: TextStyle(
+                            color: textColor,
+                          ),
                           contentPadding: EdgeInsets.all(10),
                           // 设置搜索框的图标
-                          prefixIcon: Icon(Icons.search),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: textColor,
+                          ),
                           suffixIcon: _suggestions.isNotEmpty ||
                                   _searchController.text.isNotEmpty
                               ? IconButton(
@@ -450,7 +467,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                       _tapingOnSearchBar = false;
                                     });
                                   },
-                                  icon: Icon(Icons.close))
+                                  icon: Icon(
+                                    Icons.close,
+                                    color: textColor,
+                                  ))
                               : null,
                           // 设置搜索框的提示文字
                           hintText: '搜索',
@@ -484,7 +504,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       _counterReset();
                     });
                   },
-                  icon: Icon(Icons.keyboard_double_arrow_left),
+                  icon: Icon(
+                    Icons.keyboard_double_arrow_left,
+                    color: textColor,
+                  ),
                   iconSize: 30,
                 ),
                 IconButton(
@@ -498,7 +521,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       _counterReset();
                     });
                   },
-                  icon: Icon(Icons.keyboard_double_arrow_right),
+                  icon: Icon(
+                    Icons.keyboard_double_arrow_right,
+                    color: textColor,
+                  ),
                   iconSize: 30,
                 ),
               ],
@@ -554,16 +580,83 @@ class _MyHomePageState extends State<MyHomePage> {
                 gatePortal();
               },
             ),
-            Divider(),
             _isTheRoot
-                ? ListTile(
-                    title: Text('关于'),
-                    onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return AboutPage();
-                      }));
-                    },
+                ? Column(
+                    children: [
+                      Divider(),
+                      ListTile(
+                        title: Text('关于'),
+                        onTap: () {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return AboutPage();
+                          }));
+                        },
+                      )
+                    ],
+                  )
+                : const SizedBox(),
+            _isTheRoot
+                ? Column(
+                    children: [
+                      Divider(),
+                      ListTile(
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('检查更新'),
+                            Row(
+                                    children: [
+                                      Text(
+                                        _downloadMsg,
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                      _isDownloading
+                                          ? CircularProgressIndicator(): const SizedBox(),
+                                    ],
+                                  )
+                                ,
+                          ],
+                        ),
+                        onTap: () {
+                          if (!_isDownloading) {
+                            _isDownloading = true;
+                            externalDir().then((dir) {
+                              installApk(
+                                apkPath: dir.path,
+                                onDownloading: (String msg) {
+                                  setState(() {
+                                    _downloadMsg = msg;
+                                  });
+                                },
+                                onLoading: (String msg) {
+                                  setState(() {
+                                    _downloadMsg = msg;
+                                  });
+                                },
+                                onContrasting: (String msg) {
+                                  setState(() {
+                                    _downloadMsg = msg;
+                                  });
+                                },
+                                onDone: (String msg) {
+                                  setState(() {
+                                    _downloadMsg = msg;
+                                    _isDownloading = false;
+                                  });
+                                },
+                                onError: (String msg) {
+                                  setState(() {
+                                    _downloadMsg = msg;
+                                    _isDownloading = false;
+                                  });
+                                },
+                              );
+                            });
+                          }
+                        },
+                      )
+                    ],
                   )
                 : const SizedBox(),
           ],
@@ -615,6 +708,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     child: Text(
                                       '$_word',
                                       style: TextStyle(
+                                          color: textColor,
                                           fontSize:
                                               Platform.isAndroid ? 32 : 35),
                                     ),
@@ -693,7 +787,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Padding(
                             padding: EdgeInsets.only(left: 40, right: 40),
                             child: Center(
-                              child: Text(_phonetic),
+                              child: Text(
+                                _phonetic,
+                                style: TextStyle(
+                                  color: textColor,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -764,6 +863,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   child: Center(
                                     child: Text(
                                       '$_explain',
+                                      style: TextStyle(
+                                        color: textColor,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -783,23 +885,28 @@ class _MyHomePageState extends State<MyHomePage> {
                           padding: EdgeInsets.only(left: 30, right: 30),
                           child: Center(
                             child: Text(
+                              style: TextStyle(
+                                color: textColor,
+                              ),
                               '$_other',
                             ),
                           )),
                     ),
                     !isLongWord
-                        ? Padding(
-                            padding: EdgeInsets.only(left: 30, right: 30),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ExamTypeIeltsText(),
-                                ExamTypeToeflText(),
-                                ExamTypePostgraduateText(),
-                                ExamTypeGREText(),
-                                ExamTypeCET4Text(),
-                                ExamTypeCET6Text(),
-                              ],
+                        ? IgnorePointer(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 30, right: 30),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ExamTypeIeltsText(),
+                                  ExamTypeToeflText(),
+                                  ExamTypePostgraduateText(),
+                                  ExamTypeGREText(),
+                                  ExamTypeCET4Text(),
+                                  ExamTypeCET6Text(),
+                                ],
+                              ),
                             ),
                           )
                         : const SizedBox(),
@@ -809,6 +916,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Center(
                             child: Text(
                               _wordDetails?.synonym ?? '',
+                              style: TextStyle(
+                                color: textColor,
+                              ),
                             ),
                           )),
                     ),
@@ -848,40 +958,26 @@ class _MyHomePageState extends State<MyHomePage> {
                           icon: Icon(
                             Icons.volume_up,
                             size: 26,
+                            color: textColor,
                           )),
                       IconButton(
-                          onPressed: () {
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (context) {
-                              return CollectPage(
-                                word: _word,
-                              );
-                            })).then((onValue) {
-                              if (!Navigator.canPop(context)) {
-                                CustomCache.waitForAdd.clearAll();
-                              }
-                            });
-                          },
-                          icon: !widget.isDarkness
-                              ? Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child: Icon(
-                                        Icons.star,
-                                        size: 27,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    // Positioned(
-                                    //     child: Icon(
-                                    //   Icons.star,
-                                    //   size: 26,
-                                    //   color: Colors.amber,
-                                    // )),
-                                  ],
-                                )
-                              : Icon(Icons.star_border,
-                                  size: 26, color: Colors.amber)),
+                        onPressed: () {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return CollectPage(
+                              word: _word,
+                            );
+                          })).then((onValue) {
+                            if (!Navigator.canPop(context)) {
+                              CustomCache.waitForAdd.clearAll();
+                            }
+                          });
+                        },
+                        icon: Icon(Icons.star_border,
+                            size: 26,
+                            color: Colors.amber.withOpacity(
+                                autoColor.getIsDarkness() ? 0.6 : 1.0)),
+                      ),
                     ],
                   ),
                 ),
@@ -985,7 +1081,12 @@ class _MyHomePageState extends State<MyHomePage> {
               itemCount: _suggestions.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(_suggestions[index]),
+                  title: Text(
+                    _suggestions[index],
+                    style: TextStyle(
+                      color: textColor,
+                    ),
+                  ),
                   onTap: () {
                     // 处理搜索联想词的点击事件
                     _searchController.text = _suggestions[index];
