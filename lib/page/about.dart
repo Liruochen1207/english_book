@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-final Uri _power_url = Uri.parse('https://flutter.dev');
+final Uri _power_url = Uri.parse('https://flutter.cn');
 
 class AboutPage extends StatefulWidget {
   static String version = "";
@@ -14,6 +14,11 @@ class AboutPage extends StatefulWidget {
 }
 
 class _AboutPageState extends State<AboutPage> {
+  get screenSize => MediaQuery.of(context).size;
+  get screenWidth => screenSize.width;
+  get screenHeight => screenSize.height;
+  get minimumLength => screenWidth < screenHeight ? screenWidth : screenHeight;
+
   Future<void> _openPower() async {
     if (!await launchUrl(_power_url)) {
       throw Exception('Could not launch $_power_url');
@@ -40,15 +45,16 @@ class _AboutPageState extends State<AboutPage> {
         title: Text('关于作者'),
       ),
       body: Center(
+          child: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             GestureDetector(
               child: Column(
                 children: [
                   CircleAvatar(
-                    radius:
-                        160.0, // You can adjust the radius to fit your needs
+                    radius: minimumLength /
+                        3, // You can adjust the radius to fit your needs
                     backgroundImage: AssetImage(
                         'lib/images/pika.jpg'), // Replace with your image path
                     // backgroundColor: Colors.transparent,
@@ -59,7 +65,6 @@ class _AboutPageState extends State<AboutPage> {
                   Text(
                     'Archer',
                     style: TextStyle(
-                      color: Colors.blue,
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -71,7 +76,7 @@ class _AboutPageState extends State<AboutPage> {
 
             SizedBox(
                 height:
-                    10.0), // Adds some space between the title and description
+                    50.0), // Adds some space between the title and description
             Text(
               'Version: ${AboutPage.version}',
               style: TextStyle(
@@ -80,20 +85,26 @@ class _AboutPageState extends State<AboutPage> {
             ),
             SizedBox(height: 10.0),
             GestureDetector(
-              child: Text(
-                'Powered by Flutter',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 24.0,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Powered by Flutter',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 24.0,
+                    ),
+                  ),
+                  FlutterLogo(),
+                ],
               ),
               onTap: () {
                 _openPower();
               },
-            )
+            ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

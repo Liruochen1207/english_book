@@ -138,6 +138,8 @@ class _MyHomePageState extends State<MyHomePage> {
   var _other = "";
   var _downloadMsg = "";
   bool _isDownloading = false;
+  bool _apkCached = false;
+
   WordDetails? _wordDetails;
   Uint8List? _voice;
   int _tableIndex = 0;
@@ -606,54 +608,71 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             Text('检查更新'),
                             Row(
-                                    children: [
-                                      Text(
-                                        _downloadMsg,
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                      _isDownloading
-                                          ? CircularProgressIndicator(): const SizedBox(),
-                                    ],
-                                  )
-                                ,
+                              children: [
+                                Text(
+                                  _downloadMsg,
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                _isDownloading
+                                    ? CircularProgressIndicator()
+                                    : const SizedBox(),
+                              ],
+                            ),
                           ],
                         ),
                         onTap: () {
-                          if (!_isDownloading) {
-                            _isDownloading = true;
-                            externalDir().then((dir) {
-                              installApk(
-                                apkPath: dir.path,
-                                onDownloading: (String msg) {
-                                  setState(() {
-                                    _downloadMsg = msg;
-                                  });
-                                },
-                                onLoading: (String msg) {
-                                  setState(() {
-                                    _downloadMsg = msg;
-                                  });
-                                },
-                                onContrasting: (String msg) {
-                                  setState(() {
-                                    _downloadMsg = msg;
-                                  });
-                                },
-                                onDone: (String msg) {
-                                  setState(() {
-                                    _downloadMsg = msg;
-                                    _isDownloading = false;
-                                  });
-                                },
-                                onError: (String msg) {
-                                  setState(() {
-                                    _downloadMsg = msg;
-                                    _isDownloading = false;
-                                  });
-                                },
-                              );
-                            });
-                          }
+                          _isDownloading = !_isDownloading;
+                          setState(() {
+                            if (_isDownloading) {
+                              _downloadMsg = "正在获取数据";
+                              externalDir().then((dir) {
+                                installApk(
+                                  apkPath: dir.path,
+                                  onDownloading: (String msg) {
+                                    setState(() {
+                                      _downloadMsg = msg;
+                                    });
+                                  },
+                                  onLoading: (String msg) {
+                                    setState(() {
+                                      _downloadMsg = msg;
+                                    });
+                                  },
+                                  onContrasting: (String msg) {
+                                    setState(() {
+                                      _downloadMsg = msg;
+                                    });
+                                  },
+                                  onDone: (String msg) {
+                                    setState(() {
+                                      _downloadMsg = msg;
+                                      _isDownloading = false;
+                                    });
+                                  },
+                                  onError: (String msg) {
+                                    setState(() {
+                                      _downloadMsg = msg;
+                                      _isDownloading = false;
+                                    });
+                                  },
+                                  onCancel: () {
+                                    if (!_isDownloading) {
+                                      return true;
+                                    }
+                                    return false;
+                                  },
+                                  onDownloadCached: () {
+                                    return _apkCached;
+                                  },
+                                  onDownloaded: () {
+                                    _apkCached = true;
+                                  },
+                                );
+                              });
+                            } else {
+                              _downloadMsg = "已取消 点击重试";
+                            }
+                          });
                         },
                       )
                     ],

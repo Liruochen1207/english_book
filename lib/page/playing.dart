@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:english_book/page/home.dart';
+import 'package:english_book/theme/color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart' as cup;
 import 'package:flutter/scheduler.dart';
@@ -20,23 +21,25 @@ class WordCard extends StatefulWidget {
   //   return [word];
   // }
 
-  List<dynamic> args()  {
+  List<dynamic> args() {
     List<String> ready = [];
     int startIndex = 0;
     var cardList = (fatherWidgetState._scollingList as List<dynamic>);
-    for (int i = cardList.length - 1; i >= 0; i--){
+    for (int i = cardList.length - 1; i >= 0; i--) {
       String word = cardList[i].word;
-      if (cardList[i] == this){
+      if (cardList[i] == this) {
         startIndex = cardList.length - 1 - i;
       }
       ready.add(word);
     }
     return [startIndex, ready];
   }
-  List<dynamic> showWord()  {
+
+  List<dynamic> showWord() {
     return args()[1];
   }
-  int showIndex()  {
+
+  int showIndex() {
     return args()[0];
   }
 
@@ -106,7 +109,10 @@ class _WordCardState extends State<WordCard> {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     int index = widget.showIndex();
                     return MyHomePage(
-                        isDarkness: isDarkness, wordList: widget.showWord, startIndex: index,);
+                      isDarkness: isDarkness,
+                      wordList: widget.showWord,
+                      startIndex: index,
+                    );
                   })).then((onValue) {
                     if (CustomCache.waitForAdd.hasCached()) {
                       widget.fatherWidgetState.initWordList();
@@ -226,7 +232,6 @@ class _PlayingState extends State<Playing> {
   List<String> _listenCardList = [];
   String inputing = "";
   TextEditingController controller = TextEditingController();
-  Timer? timer;
   int index = 0;
 
   final Future<SharedPreferencesWithCache> _group_prefs =
@@ -237,7 +242,6 @@ class _PlayingState extends State<Playing> {
 
   @override
   void dispose() {
-    timer?.cancel();
     controller.dispose();
     super.dispose();
   }
@@ -363,6 +367,9 @@ class _PlayingState extends State<Playing> {
 
   @override
   Widget build(BuildContext context) {
+    AutoColor autoColor = AutoColor(context);
+    Color primaryColor = autoColor.primaryColor();
+    Color textColor = autoColor.textColor();
     bool isDarkness =
         MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return WillPopScope(
@@ -392,8 +399,7 @@ class _PlayingState extends State<Playing> {
                 padding: EdgeInsets.all(20),
                 child: cup.CupertinoTextField(
                   placeholder: "请输入要添加的单词",
-                  style:
-                      TextStyle(color: isDarkness ? Colors.grey : Colors.black),
+                  style: TextStyle(color: textColor),
                   controller: controller,
                   onChanged: (value) {
                     inputing = value;
@@ -413,9 +419,7 @@ class _PlayingState extends State<Playing> {
                     width: 250,
                     height: 40,
                     alignment: Alignment.center,
-                    color: isDarkness
-                        ? Colors.deepPurple
-                        : Color.fromARGB(255, 232, 220, 90),
+                    color: primaryColor,
                     child: Text("添加"),
                   ),
                 ),
@@ -427,41 +431,6 @@ class _PlayingState extends State<Playing> {
                     verticalDirection: VerticalDirection.up,
                     children: _scollingList,
                   ),
-                ),
-              ),
-              Container(
-                height: 70,
-                color: isDarkness ? Colors.deepPurple : Colors.amber,
-                child: Row(
-                  children: [
-                    const SizedBox(
-                      width: 20,
-                    ),
-                    IconButton(
-                        onPressed: () {
-                          List<String> wordList = [];
-                          for (var i = 0; i < _scollingList.length; i++) {
-                            WordCard card = _scollingList[i] as WordCard;
-                            wordList.add(card.word);
-                          }
-                          int repeatTimes = 2;
-                          timer = Timer.periodic(Duration(milliseconds: 1500),
-                              (timer) {
-                            if (index < wordList.length) {
-                              print(wordList[index]);
-                              index++;
-                            } else {
-                              print('已完成打印所有列表项');
-                              index = 0;
-                              timer.cancel();
-                            }
-                          });
-                        },
-                        icon: Icon(
-                          Icons.play_arrow,
-                          size: 34,
-                        )),
-                  ],
                 ),
               ),
             ],

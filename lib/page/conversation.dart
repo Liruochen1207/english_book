@@ -92,10 +92,20 @@ class _ConversationPageState extends State<ConversationPage> {
 
   @override
   Widget build(BuildContext context) {
-    var autoColor = AutoColor(context);
+    AutoColor autoColor = AutoColor(context);
+    Color primaryColor = autoColor.primaryColor();
+    Color textColor = autoColor.textColor();
+    Color starColor = autoColor.starColor();
     return Scaffold(
       appBar: AppBar(
-        title: Text('AI解释:${widget.word}'),
+        iconTheme: IconThemeData(
+          color: textColor, // 设置leading图标颜色
+        ),
+        backgroundColor: primaryColor,
+        title: Text(
+          '可触摸AI解释',
+          style: TextStyle(color: textColor),
+        ),
         actions: [
           IconButton(
               onPressed: () {
@@ -109,10 +119,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   }
                 });
               },
-              icon: Icon(Icons.star_border,
-                  size: 26,
-                  color: Colors.amber.withOpacity(
-                      autoColor.getIsDarkness() ? 0.6 : 1.0))),
+              icon: Icon(Icons.star_border, size: 26, color: starColor)),
         ],
       ),
       body: SingleChildScrollView(

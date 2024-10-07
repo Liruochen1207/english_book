@@ -26,12 +26,17 @@ class AutoColor {
   }
 
   Color textColor() {
-    return (isDarkness ?? false) ? Colors.white54: Colors.black87;
+    return (isDarkness ?? false) ? Colors.white54 : Colors.black87;
   }
 
   Color labelColor() {
     return (isDarkness ?? false) ? Cls.label_5 : Cls.label_4;
   }
+
+  Color starColor() {
+    return (isDarkness ?? false) ? Colors.amber : Colors.black87;
+  }
+
   Color backgroundColor() {
     return (isDarkness ?? false) ? Cls.label_3 : Cls.label_1.withOpacity(0.87);
   }
