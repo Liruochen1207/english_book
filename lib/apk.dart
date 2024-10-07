@@ -86,6 +86,7 @@ Future<void> installApk({
         }
       } else {
         onDone("已经是最新版");
+        return;
       }
     }
     onLoading("数据校验");

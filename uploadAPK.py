@@ -6,7 +6,7 @@ byte = None
 with open(r"build\app\outputs\flutter-apk\app-release.apk", "rb") as f:
     byte = f.read()
 
-version = "1.0.3"
+version = "1.0.2"
 
 
 content = base64.b64encode(byte).decode()
