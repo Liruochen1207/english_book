@@ -718,13 +718,13 @@ packages:
     source: hosted
     version: "1.1.0"
   win32:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: win32
-      sha256: "68d1e89a91ed61ad9c370f9f8b6effed9ae5e0ede22a270bdfa6daf79fc2290a"
+      sha256: "4d45dc9069dba4619dc0ebd93c7cec5e66d8482cb625a370ac806dcc8165f2ec"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "5.5.4"
+    version: "5.5.5"
   xdg_directories:
     dependency: transitive
     description:
@@ -734,5 +734,5 @@ packages:
     source: hosted
     version: "1.1.0"
 sdks:
-  dart: ">=3.4.0 <4.0.0"
+  dart: ">=3.5.0 <4.0.0"
   flutter: ">=3.22.0"

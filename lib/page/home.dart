@@ -20,6 +20,7 @@ import 'package:english_book/http/word.dart';
 import 'package:english_book/http/english_chinese.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:win32/win32.dart';
 import 'package:path_provider/path_provider.dart';
 // import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -124,6 +125,8 @@ class _MyHomePageState extends State<MyHomePage> {
   AudioPlayer? player;
   var client = SqlClient();
 
+  bool _isAndroid = Platform.isAndroid;
+
   int _wordIndex = 0;
   int _delta = 0;
   final int _speechType = 2;
@@ -174,6 +177,7 @@ class _MyHomePageState extends State<MyHomePage> {
   get screenSize => MediaQuery.of(context).size;
   get screenWidth => screenSize.width;
   get screenHeight => screenSize.height;
+  get minimumLength => screenWidth < screenHeight ? screenWidth : screenHeight;
 
   Future<void> _counterReset() async {
     _wordIndex = 0;
@@ -382,7 +386,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: _showAppbar &&
-              MediaQuery.of(context).orientation == Orientation.portrait
+              (MediaQuery.of(context).orientation == Orientation.portrait || (!_isAndroid))
           ? AppBar(
               iconTheme: IconThemeData(
                 color: textColor, // 设置leading图标颜色

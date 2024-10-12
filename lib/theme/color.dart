@@ -26,7 +26,7 @@ class AutoColor {
   }
 
   Color textColor() {
-    return (isDarkness ?? false) ? Colors.white54 : Colors.black87;
+    return (isDarkness ?? false) ? Colors.white70 : Colors.black87;
   }
 
   Color labelColor() {

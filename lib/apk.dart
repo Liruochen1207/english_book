@@ -12,6 +12,11 @@ import 'package:path_provider/path_provider.dart'; // 添加此行
 
 import 'channels.dart';
 
+enum AppType {
+  apk,
+  exe
+}
+
 class Apk {
   Uint8List content;
   String name;
@@ -19,26 +24,35 @@ class Apk {
   Apk(this.content, this.name, this.version);
 }
 
-Future<Map> getNewestApk64() async {
+class Exe {
+  Uint8List content;
+  String name;
+  String version;
+  Exe(this.content, this.name, this.version);
+}
+
+
+
+Future<Map> getNewestAppMap(AppType appType) async {
   final dio = Dio();
-  final response = await dio.post("http://47.108.91.180:5000/apk");
+  final response = await dio.post("http://47.108.91.180:5000/${appType.name}");
   var data = response.data;
   return data;
 }
 
-Future<String> getLatestApkVersion(String currentVersion) async {
+Future<String> getLatestAppVersion(String currentVersion, AppType appType) async {
   final dio = Dio();
   final response =
-      await dio.post("http://47.108.91.180:5000/apk_latest_version");
+      await dio.post("http://47.108.91.180:5000/${appType.name}_latest_version");
   var data = response.data['version'];
-  if (data.runtimeType == String) {
+  if (data.runtimeType == String && data != "No versions found.") {
     return data;
   }
   return currentVersion;
 }
 
 Future<Apk> getNewApk() async {
-  Map data = await getNewestApk64();
+  Map data = await getNewestAppMap(AppType.apk);
   print(data);
   String name = data['name'];
   String version = data['version'];
@@ -46,6 +60,37 @@ Future<Apk> getNewApk() async {
   Apk apk = Apk(content, name, version);
   return apk;
 }
+
+Future<Exe> getNewExe() async {
+  Map data = await getNewestAppMap(AppType.exe);
+  print(data);
+  String name = data['name'];
+  String version = data['version'];
+  Uint8List content = base64Decode(data['content']);
+  Exe exe = Exe(content, name, version);
+  return exe;
+}
+
+void runExe(String exePath) {
+  // 请确保替换下面的路径为你的exe文件的实际路径
+  print(exePath);
+  final process = Process.start(exePath, []);
+
+  process.then((Process proc) {
+    // 可以监听输出流
+    proc.stdout.transform(utf8.decoder).listen((data) {
+      print(data);
+    });
+
+    // 监听错误流
+    proc.stderr.transform(utf8.decoder).listen((data) {
+      print(data);
+    });
+  }).catchError((e) {
+    print('Error: $e');
+  });
+}
+
 
 Future<void> installApk({
   required String apkPath,
@@ -59,23 +104,48 @@ Future<void> installApk({
   required void Function(String msg) onError,
 }) async {
   try {
-    String filepath = '$apkPath/base.apk';
+    print("准备安装在 => $apkPath");
+
+    String filepath = '';
+
+    if (Platform.isAndroid){
+      filepath = "$apkPath/base.apk";
+    }
+    if (Platform.isWindows){
+      filepath = "$apkPath/install.exe";
+    }
 
     if (!onDownloadCached()) {
       onContrasting("准备对比版本");
       await Future.delayed(Duration(milliseconds: 800));
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       String currentVersion = packageInfo.version;
-      String latestApkVersion = await getLatestApkVersion(currentVersion);
+      String latestApkVersion = currentVersion;
+      switch (Platform.operatingSystem) {
+        case "android":
+          latestApkVersion = await getLatestAppVersion(currentVersion, AppType.apk);
+          break;
+        case "windows":
+          latestApkVersion = await getLatestAppVersion(currentVersion, AppType.exe);
+          break;
+      }
       if (latestApkVersion.compareTo(currentVersion) > 0) {
         if (onCancel()) {
           return;
         }
         onDownloading("开始下载 点击取消");
-        Apk apkInstance = await getNewApk();
+        if (Platform.isAndroid){
+          Apk apkInstance = await getNewApk();
 
-        File apkWriter = File(filepath);
-        await apkWriter.writeAsBytes(apkInstance.content);
+          File apkWriter = File(filepath);
+          await apkWriter.writeAsBytes(apkInstance.content);
+        }
+        if (Platform.isWindows){
+          Exe exeInstance = await getNewExe();
+
+          File exeWriter = File(filepath);
+          await exeWriter.writeAsBytes(exeInstance.content);
+        }
 
         onDownloaded();
         if (onCancel()) {
@@ -109,6 +179,13 @@ Future<void> installApk({
       onDone("准备安装");
       await intent.launch();
     }
+
+    if (Platform.isWindows){
+      runExe(filepath);
+      onDone("启动安装包");
+    }
+
+
   } catch (e) {
     onError(e.runtimeType.toString());
     throw e;
