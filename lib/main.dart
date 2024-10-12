@@ -1,5 +1,4 @@
 import 'package:english_book/page/home.dart';
-import 'package:english_book/sql/client.dart';
 import 'package:english_book/http/word.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,7 +26,6 @@ Future<bool> requestStoragePermission() async {
 }
 
 
-var client = SqlClient();
 void main() {
   runApp(const MyApp());
   requestInstallPermission();

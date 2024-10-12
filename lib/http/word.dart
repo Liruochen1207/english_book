@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:mysql_client/mysql_client.dart';
 
 import 'package:dio/dio.dart';
 
@@ -17,22 +16,7 @@ Future<dynamic> dioPost(String url, [query]) async {
   return response.data; // 打印存储的字符串
 }
 
-Future<void> submitMeans(MySQLConnection? connection, int tableIndex,
-    String word, String mean) async {
-  if (tableIndex == -1) {
-    return;
-  }
-  if (mean != "") {
-    if (connection != null && connection!.connected) {
-      var result = await connection.execute(
-          "UPDATE word_table0$tableIndex SET mean='$mean' WHERE word='$word'");
-      print("注入结果：");
-      // for (final row in result.rows) {
-      //   print(row.colAt(0));
-      // }
-    }
-  }
-}
+
 
 Future<void> submitOthers(String word, String other) async {
   if (generateAlphabet().contains(word[0])) {

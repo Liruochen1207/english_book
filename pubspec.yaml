@@ -29,7 +29,6 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
 
-  mysql_client: ^0.0.27
   audioplayers: ^6.0.0
   dio: ^5.4.3+1
   dio_cookie_manager: ^3.1.1

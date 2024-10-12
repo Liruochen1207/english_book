@@ -11,7 +11,7 @@ typedef MonitorEnumProcDart = int Function(
     int hMonitor, int hdcMonitor, Pointer<NativeType> lprcMonitor, int dwData);
 
 void main() {
-  SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+  // SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
   // 使用 EnumDisplayMonitors 枚举所有显示器
   EnumDisplayMonitors(

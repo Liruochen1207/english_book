@@ -14,7 +14,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:english_book/card/interface_controlableWidget.dart';
 import 'package:english_book/card/template_card.dart';
 import 'package:english_book/note_action.dart';
-import 'package:english_book/sql/client.dart';
 import 'package:english_book/http/word.dart';
 
 import 'package:english_book/http/english_chinese.dart';
@@ -123,7 +122,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   AudioPlayer? player;
-  var client = SqlClient();
 
   bool _isAndroid = Platform.isAndroid;
 
