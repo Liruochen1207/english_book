@@ -26,6 +26,7 @@ void main() {
 
 // 回调函数，用于处理每个显示器的信息
 int monitorEnumProc(int hMonitor, int hdcMonitor, Pointer<NativeType> lprcMonitor, int dwData) {
+  print(hMonitor);
   final monitorInfo = calloc<MONITORINFO>();
   monitorInfo.ref.cbSize = sizeOf<MONITORINFO>();
 
